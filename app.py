@@ -17,7 +17,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 
 # 2. Configure the App (Consolidated)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///customers.db'
+# Check if the DATABASE_URL environment variable is set (it will be on Render)
+if os.environ.get('DATABASE_URL'):
+    # Use the Render PostgreSQL database
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
+else:
+    # Otherwise, use the local SQLite database for development
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///customers.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # ADD THE SECRET KEY HERE
 app.config['SECRET_KEY'] = 'a-super-secret-key-that-you-should-change' 
