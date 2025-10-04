@@ -1,0 +1,299 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Application Revenue Report {% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- Enhanced Header Section -->
+    <div class="instructor-report-header">
+        <div class="instructor-info">
+            <div class="instructor-avatar" style="background: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);">
+                <i class="tim-icons icon-paper"></i>
+            </div>
+            <div class="instructor-details">
+                <h2>Application Revenue Report</h2>
+                <p><i class="tim-icons icon-zoom-split"></i> Filtered by: 
+                    {% if year_filter %}<strong>Year {{ year_filter }}</strong>{% endif %}
+                    {% if university_id_filter %}<strong>Selected University</strong>{% endif %}
+                    {% if college_id_filter %}<strong>Selected College</strong>{% endif %}
+                    {% if not year_filter and not university_id_filter and not college_id_filter %}
+                        All
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-export" onclick="window.print()">
+                <i class="tim-icons icon-cloud-download-93"></i> Export PDF
+            </button>
+            <a href="{{ url_for('reports_hub') }}" class="btn btn-back">
+                <i class="tim-icons icon-minimal-left"></i> Back to Reports
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card instructor-report-card">
+                <div class="card-body">
+                    <!-- Simplified Tab Navigation -->
+                    <ul class="nav nav-tabs instructor-tabs" id="ReportTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview" role="tab">
+                                <i class="tim-icons icon-chart-pie-36"></i>
+                                <span>Overview</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="revenue-breakdown-tab" data-toggle="tab" href="#revenue-breakdown" role="tab">
+                                <i class="tim-icons icon-world"></i>
+                                <span>Revenue Breakdown</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content instructor-tab-content" id="ReportTabsContent">
+                        
+                        <!-- Overview Tab -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                            <div class="overview-stats">
+                                <div class="stat-card stat-revenue">
+                                    <div class="stat-icon">
+                                        <i class="tim-icons icon-wallet-43"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <p class="stat-label">Total Application Revenue</p>
+                                        <h3 class="stat-value">{{ "%.2f"|format(total_app_revenue) }} <span>EGP</span></h3>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card stat-students" style="border-color: #1f8ef1;">
+                                    <div class="stat-icon" style="background: #1f8ef1;">
+                                        <i class="tim-icons icon-paper"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <p class="stat-label">Total Applications Paid</p>
+                                        <h3 class="stat-value">{{ total_applications }}</h3>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card stat-subjects" style="border-color: #00f2c3;">
+                                    <div class="stat-icon" style="background: #00f2c3;">
+                                        <i class="tim-icons icon-single-02"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <p class="stat-label">Total Unique Students</p>
+                                        <h3 class="stat-value">{{ total_unique_students }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Revenue Breakdown Tab -->
+                        <div class="tab-pane fade" id="revenue-breakdown" role="tabpanel">
+                            <div class="tab-header">
+                                <h5><i class="tim-icons icon-world"></i> Hierarchical Revenue Breakdown</h5>
+                                <p>Drill down through years, universities, colleges, and subjects.</p>
+                            </div>
+                            
+                            {% if report_data %}
+                                                <!-- Accordion for Report Data -->
+                    <div class="accordion report-accordion" id="yearAccordion">
+                        <!-- Level 1: Year -->
+                        {% for year, year_data in report_data.items() %}{% set y_idx = loop.index %}
+                        <div class="accordion-card mb-3">
+                            <div class="accordion-header">
+                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-year-{{ y_idx }}">
+                                    <span class="accordion-title"><i class="tim-icons icon-calendar-60"></i> Year {{ year }}</span>
+                                    <span class="accordion-badge badge-success">{{ "%.2f"|format(year_data.total) }} EGP</span>
+                                </button>
+                            </div>
+                            <div id="collapse-year-{{ y_idx }}" class="collapse" data-parent="#yearAccordion">
+                                <div class="accordion-body nested-accordion">
+                                    <!-- Level 2: University -->
+                                    <div class="accordion" id="universityAccordion-{{ y_idx }}">
+                                        {% for uni_name, uni_data in year_data.universities.items() %}{% set u_idx = loop.index %}
+                                        <div class="accordion-card">
+                                            <div class="accordion-header">
+                                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-uni-{{ y_idx }}-{{ u_idx }}">
+                                                    <span class="accordion-title"><i class="tim-icons icon-bank"></i> {{ uni_name }}</span>
+                                                    <span class="accordion-badge badge-info">{{ "%.2f"|format(uni_data.total) }} EGP</span>
+                                                </button>
+                                            </div>
+                                            <div id="collapse-uni-{{ y_idx }}-{{ u_idx }}" class="collapse" data-parent="#universityAccordion-{{ y_idx }}">
+                                                <div class="accordion-body">
+                                                    <!-- Level 3: College -->
+                                                    <div class="accordion" id="collegeAccordion-{{ y_idx }}-{{ u_idx }}">
+                                                        {% for college_name, college_data in uni_data.colleges.items() %}{% set col_idx = loop.index %}
+                                                        <div class="accordion-card">
+                                                            <div class="accordion-header">
+                                                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-college-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}">
+                                                                    <span class="accordion-title"><i class="tim-icons icon-istanbul"></i> {{ college_name }}</span>
+                                                                    <span class="accordion-badge badge-primary">{{ "%.2f"|format(college_data.total) }} EGP</span>
+                                                                </button>
+                                                            </div>
+                                                            <div id="collapse-college-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}" class="collapse" data-parent="#collegeAccordion-{{ y_idx }}-{{ u_idx }}">
+                                                                <div class="accordion-body">
+                                                                    <!-- Level 4: Terms -->
+                                                                    {% if college_data.terms %}
+                                                                    <div class="accordion" id="termAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}">
+                                                                        {% for term_name, term_data in college_data.terms.items() %}{% set t_idx = loop.index %}
+                                                                        <div class="accordion-card">
+                                                                            <div class="accordion-header">
+                                                                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-term-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ t_idx }}">
+                                                                                    <span class="accordion-title"><i class="tim-icons icon-bullet-list-67"></i> {{ term_name }}</span>
+                                                                                    <span class="accordion-badge badge-info">{{ "%.2f"|format(term_data.total) }} EGP</span>
+                                                                                </button>
+                                                                            </div>
+                                                                            <div id="collapse-term-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ t_idx }}" class="collapse" data-parent="#termAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}">
+                                                                                <div class="accordion-body">
+                                                                                    <!-- Level 5: Subjects within Term -->
+                                                                                    <div class="accordion" id="subjectTermAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ t_idx }}">
+                                                                                        {% for subject_name, subject_data in term_data.subjects.items() %}{% set s_idx = loop.index %}
+                                                                                        <div class="accordion-card">
+                                                                                            <div class="accordion-header">
+                                                                                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-subject-term-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ t_idx }}-{{ s_idx }}">
+                                                                                                    <span class="accordion-title"><i class="tim-icons icon-book-bookmark"></i> {{ subject_name }}</span>
+                                                                                                    <span class="accordion-badge badge-default">{{ "%.2f"|format(subject_data.total) }} EGP</span>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            <div id="collapse-subject-term-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ t_idx }}-{{ s_idx }}" class="collapse" data-parent="#subjectTermAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ t_idx }}">
+                                                                                                <div class="accordion-body">
+                                                                                                    <table class="table report-table">
+                                                                                                        <thead><tr><th>Student</th><th>Date</th><th class="text-right">Amount</th></tr></thead>
+                                                                                                        <tbody>
+                                                                                                            {% for payment in subject_data.payments %}
+                                                                                                            <tr>
+                                                                                                                <td><a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
+                                                                                                                <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
+                                                                                                                <td class="text-right">{{ "%.2f"|format(payment.application_price_paid) }} EGP</td>
+                                                                                                            </tr>
+                                                                                                            {% endfor %}
+                                                                                                        </tbody>
+                                                                                                    </table>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        {% endfor %}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                    {% endif %}
+                                                                    <!-- Level 4: Modules -->
+                                                                    {% if college_data.modules %}
+                                                                    <div class="accordion" id="moduleAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}">
+                                                                        {% for module_name, module_data in college_data.modules.items() %}{% set m_idx = loop.index %}
+                                                                        <div class="accordion-card">
+                                                                            <div class="accordion-header">
+                                                                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-module-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ m_idx }}">
+                                                                                    <span class="accordion-title"><i class="tim-icons icon-vector"></i> {{ module_name }}</span>
+                                                                                    <span class="accordion-badge badge-default">{{ "%.2f"|format(module_data.total) }} EGP</span>
+                                                                                </button>
+                                                                            </div>
+                                                                            <div id="collapse-module-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ m_idx }}" class="collapse" data-parent="#moduleAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}">
+                                                                                <div class="accordion-body">
+                                                                                    <!-- Level 5: Subjects within Module -->
+                                                                                    <div class="accordion" id="subjectModuleAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ m_idx }}">
+                                                                                        {% for subject_name, subject_data in module_data.subjects.items() %}{% set s_idx = loop.index %}
+                                                                                        <div class="accordion-card">
+                                                                                            <div class="accordion-header">
+                                                                                                <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-subject-module-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ m_idx }}-{{ s_idx }}">
+                                                                                                    <span class="accordion-title"><i class="tim-icons icon-book-bookmark"></i> {{ subject_name }}</span>
+                                                                                                    <span class="accordion-badge badge-default">{{ "%.2f"|format(subject_data.total) }} EGP</span>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            <div id="collapse-subject-module-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ m_idx }}-{{ s_idx }}" class="collapse" data-parent="#subjectModuleAccordion-{{ y_idx }}-{{ u_idx }}-{{ col_idx }}-{{ m_idx }}">
+                                                                                                <div class="accordion-body">
+                                                                                                    <table class="table report-table">
+                                                                                                        <thead><tr><th>Student</th><th>Date</th><th class="text-right">Amount</th></tr></thead>
+                                                                                                        <tbody>
+                                                                                                            {% for payment in subject_data.payments %}
+                                                                                                            <tr>
+                                                                                                                <td><a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
+                                                                                                                <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
+                                                                                                                <td class="text-right">{{ "%.2f"|format(payment.application_price_paid) }} EGP</td>
+                                                                                                            </tr>
+                                                                                                            {% endfor %}
+                                                                                                        </tbody>
+                                                                                                    </table>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        {% endfor %}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                            {% else %}
+                            <div class="enhanced-empty-state">
+                                <div class="empty-icon">
+                                    <i class="tim-icons icon-map-big"></i>
+                                </div>
+                                <h4>No Application Revenue Found</h4>
+                                <p>No application payments match the selected filters.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Animate stat values on page load
+    $('.stat-value').each(function() {
+        const $this = $(this);
+        const text = $this.text().trim();
+        const match = text.match(/^([\d,.]+)/);
+        
+        if (match) {
+            const countTo = parseFloat(match[1].replace(/,/g, ''));
+            const suffix = text.replace(match[1], '').trim();
+            
+            $({ countNum: 0 }).animate({
+                countNum: countTo
+            }, {
+                duration: 1500,
+                easing: 'swing',
+                step: function() {
+                    // For currency, show two decimal places during animation
+                    let stepValue = (suffix === 'EGP') ? this.countNum.toFixed(2) : Math.floor(this.countNum);
+                    $this.html(parseFloat(stepValue).toLocaleString('en-US', {minimumFractionDigits: (suffix === 'EGP' ? 2 : 0)}) + (suffix ? ' <span>' + suffix + '</span>' : ''));
+                },
+                complete: function() {
+                    $this.html(countTo.toLocaleString('en-US', {minimumFractionDigits: (suffix === 'EGP' ? 2 : 0)}) + (suffix ? ' <span>' + suffix + '</span>' : ''));
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

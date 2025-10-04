@@ -1,0 +1,231 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Reports Hub {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+    <!-- Hero Section -->
+    <div class="reports-hero">
+        <h2><i class="tim-icons icon-chart-bar-32"></i> Financial & Academic Reports</h2>
+        <p>Access comprehensive financial statements and academic performance reports for instructors</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column - Report Selection -->
+        <div class="col-lg-8">
+            <!-- Instructor Report Card (Unchanged) -->
+            <div class="report-card">
+                <div class="report-icon">
+                    <i class="tim-icons icon-money-coins"></i>
+                </div>
+                <h5>Instructor Financial Reports</h5>
+                <p>View detailed financial statements including earnings, payments, and outstanding balances for each instructor</p>
+                
+                {% if instructors %}
+                <div class="report-form-container">
+                    <form id="instructor-report-form" method="GET" action="">
+                        <div class="form-group">
+                            <label for="instructor-select" class="form-label-enhanced">
+                                <i class="tim-icons icon-single-02"></i>
+                                Select Instructor
+                            </label>
+                            <select class="form-control" id="instructor-select" name="instructor_id">
+                                <option></option>
+                                {% for instructor in instructors %}
+                                    <option value="{{ instructor.id }}">{{ instructor.name }} ({{ instructor.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-report-primary btn-block">
+                            <i class="tim-icons icon-zoom-split"></i> Generate Report
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="tim-icons icon-alert-circle-exc"></i>
+                    </div>
+                    <h4>No Instructors Found</h4>
+                    <p>Please add an instructor in the Settings page to generate reports</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Application Report Card -->
+            <div class="report-card">
+                <div class="report-icon" style="background: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);">
+                    <i class="tim-icons icon-paper"></i>
+                </div>
+                <h5>Application Revenue Report</h5>
+                <p>Filter application fee revenue by academic year, university, or college.</p>
+                
+                <div class="report-form-container">
+                    <form id="application-report-form" method="GET" action="{{ url_for('application_report') }}">
+                        
+            
+                        <!-- Filter by University -->
+                        <div class="form-group">
+                            <label for="university_filter" class="form-label-enhanced"><i class="tim-icons icon-bank"></i> Filter by University (Optional)</label>
+                            <select class="form-control" id="university_filter" name="university_id">
+                                <option value="">All Universities</option>
+                                {% for uni in all_universities %}
+                                  <option value="{{ uni.id }}">{{ uni.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+            
+                        <!-- Filter by College -->
+                        <div class="form-group">
+                            <label for="college_filter" class="form-label-enhanced"><i class="tim-icons icon-istanbul"></i> Filter by College (Optional)</label>
+                            <select class="form-control" id="college_filter" name="college_id">
+                                <option value="">All Colleges</option>
+                                {% for college in all_colleges %}
+                                  <option value="{{ college.id }}">{{ college.name }} ({{ college.university.name }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+            
+                        <button type="submit" class="btn btn-report-primary btn-block" style="background: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);">
+                            <i class="tim-icons icon-zoom-split"></i> Generate Application Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Enrollment Reports Card (Unchanged) -->
+            <div class="report-card" style="opacity: 0.6; pointer-events: none;">
+                <div class="report-icon" style="background: linear-gradient(135deg, #fb6340 0%, #fbb140 100%);">
+                    <i class="tim-icons icon-calendar-60"></i>
+                </div>
+                <h5>Enrollment Reports <span class="badge badge-info" style="font-size: 11px;">Coming Soon</span></h5>
+                <p>Track enrollment trends, student registrations, and course popularity over time</p>
+            </div>
+        </div>
+
+        <!-- Right Column - Quick Stats (Unchanged) -->
+        <div class="col-lg-4">
+            <div class="card" style="border-radius: 16px; background: #27293d;">
+                <div class="card-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 24px;">
+                    <h5 class="card-title" style="margin: 0; font-weight: 600;">
+                        <i class="tim-icons icon-app"></i> Quick Stats
+                    </h5>
+                </div>
+                <div class="card-body" style="padding: 24px;">
+                    <div class="quick-stat" style="margin-bottom: 16px;">
+                        <div class="quick-stat-icon">
+                            <i class="tim-icons icon-single-02"></i>
+                        </div>
+                        <div class="quick-stat-value">{{ instructors|length }}</div>
+                        <div class="quick-stat-label">Active Instructors</div>
+                    </div>
+                    
+                    <div class="quick-stat" style="margin-bottom: 16px;">
+                        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);">
+                            <i class="tim-icons icon-chart-bar-32"></i>
+                        </div>
+                        <div class="quick-stat-value">{{ instructors|length }}</div>
+                        <div class="quick-stat-label">Available Reports</div>
+                    </div>
+
+                    <div class="quick-stat">
+                        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #fb6340 0%, #fbb140 100%);">
+                            <i class="tim-icons icon-time-alarm"></i>
+                        </div>
+                        <div class="quick-stat-value">Live</div>
+                        <div class="quick-stat-label">Real-Time Data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Tips (Unchanged) -->
+            <div class="card" style="border-radius: 16px; background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%); border: 1px solid rgba(102,126,234,0.2); margin-top: 20px;">
+                <div class="card-body" style="padding: 24px;">
+                    <h6 style="font-weight: 600; margin-bottom: 16px; color: #fff;">
+                        <i class="tim-icons icon-bulb-63 text-warning"></i> Report Tips
+                    </h6>
+                    <ul style="margin: 0; padding-left: 20px; color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.8;">
+                        <li>Reports are generated in real-time</li>
+                        <li>Export options available in PDF format</li>
+                        <li>Filter by date range for detailed analysis</li>
+                        <li>Share reports securely via email</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for Instructor dropdown
+        $('#instructor-select').select2({
+            placeholder: "🔍 Search by name or email...",
+            allowClear: true,
+            theme: "default",
+            width: '100%'
+        });
+
+        // ===================================================================
+        // === THIS IS THE NEW JAVASCRIPT TO FIX THE DROPDOWNS ===
+        // ===================================================================
+        $('#year_filter').select2({
+            placeholder: "Select a Year",
+            allowClear: true,
+            theme: "default",
+            width: '100%'
+        });
+        $('#university_filter').select2({
+            placeholder: "Search for a University",
+            allowClear: true,
+            theme: "default",
+            width: '100%'
+        });
+        $('#college_filter').select2({
+            placeholder: "Search for a College",
+            allowClear: true,
+            theme: "default",
+            width: '100%'
+        });
+        // ===================================================================
+        // =================== END OF THE NEW JAVASCRIPT =====================
+        // ===================================================================
+
+        // Handle Instructor form submission
+        $('#instructor-report-form').on('submit', function(e) {
+            e.preventDefault();
+            var instructorId = $('#instructor-select').val();
+            if (instructorId) {
+                var $btn = $(this).find('button[type="submit"]');
+                $btn.html('<i class="tim-icons icon-refresh-01 spinning"></i> Generating...');
+                $btn.prop('disabled', true);
+                var reportUrl = "{{ url_for('instructor_report', instructor_id=0) }}".replace('0', instructorId);
+                setTimeout(function() { window.location.href = reportUrl; }, 500);
+            } else {
+                showNotification('Please select an instructor to generate a report', 'warning');
+            }
+        });
+
+        // Add spinning animation style
+        var style = document.createElement('style');
+        style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spinning { animation: spin 1s linear infinite; display: inline-block; }`;
+        document.head.appendChild(style);
+
+        // Notification function
+        function showNotification(message, type) {
+            var color = type === 'warning' ? '#fb6340' : '#2dce89';
+            var notification = $('<div>').css({ position: 'fixed', top: '20px', right: '20px', background: 'linear-gradient(135deg, ' + color + ' 0%, ' + color + 'dd 100%)', color: '#fff', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 9999, fontSize: '15px', fontWeight: '500', opacity: 0, transform: 'translateY(-20px)', transition: 'all 0.3s ease' }).html('<i class="tim-icons icon-bell-55"></i> ' + message).appendTo('body');
+            setTimeout(function() { notification.css({ opacity: 1, transform: 'translateY(0)' }); }, 100);
+            setTimeout(function() { notification.css({ opacity: 0, transform: 'translateY(-20px)' }); setTimeout(function() { notification.remove(); }, 300); }, 3000);
+        }
+    });
+</script>
+{% endblock javascripts %}

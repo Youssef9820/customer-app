@@ -1,0 +1,213 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Edit {{ item_type }} {% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="title">Edit {{ item_type }}: {{ item.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        
+                        {# --- SIMPLE NAME EDIT (FOR COUNTRY) --- #}
+                        {% if item_type == 'Country' %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Country Name</label>
+                                    <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {# --- EDIT UNIVERSITY --- #}
+                        {% if item_type == 'University' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>University Name</label>
+                                    <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <select name="country_id" class="form-control select2-dropdown" required>
+                                        {% for country in all_countries %}
+                                            <option value="{{ country.id }}" {% if country.id == item.country_id %}selected{% endif %}>
+                                                {{ country.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {# --- EDIT COLLEGE --- #}
+                        {% if item_type == 'College' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>College Name</label>
+                                    <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>University</label>
+                                    <select name="university_id" class="form-control select2-dropdown" required>
+                                        {% for university in all_universities %}
+                                            <option value="{{ university.id }}" {% if university.id == item.university_id %}selected{% endif %}>
+                                                {{ university.name }} ({{ university.country.name }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {# --- EDIT INSTRUCTOR --- #}
+                        {% if item_type == 'Instructor' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Instructor Name</label>
+                                    <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" name="email" class="form-control" value="{{ item.email or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+{# --- EDIT SUBJECT --- #}
+{% if item_type == 'Subject' %}
+<div class="row">
+    <!-- Column 1 -->
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Subject Name</label>
+            <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+        </div>
+        <div class="form-group">
+            <label>Year</label>
+            <input type="number" name="year" class="form-control" value="{{ item.year }}" required>
+        </div>
+        
+        <!-- === DYNAMIC TERM/MODULE FIELDS === -->
+        <div id="term-input-wrapper" style="display: none;">
+            <div class="form-group"><label>Term</label><input type="text" name="term" class="form-control" value="{{ item.term or '' }}"></div>
+        </div>
+        <div id="module-input-wrapper" style="display: none;">
+            <div class="form-group"><label>Module</label><input type="text" name="module" class="form-control" value="{{ item.module or '' }}"></div>
+        </div>
+        <!-- === END OF DYNAMIC FIELDS === -->
+
+    </div>
+    <!-- Column 2 -->
+    <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6"><div class="form-group"><label>Course Price</label><input type="number" step="0.01" name="course_price" class="form-control" value="{{ item.default_course_price }}" required></div></div>
+            <div class="col-md-6"><div class="form-group"><label>App Price</label><input type="number" step="0.01" name="app_price" class="form-control" value="{{ item.default_application_price }}" required></div></div>
+        </div>
+        <div class="form-group">
+            <label>College</label>
+            <!-- === ADD AN ID TO THIS SELECT DROPDOWN === -->
+            <select id="subject-college-select" name="college_id" class="form-control select2-dropdown" required>
+                {% for college in all_colleges %}<option value="{{ college.id }}" {% if college.id == item.college_id %}selected{% endif %}>{{ college.name }} ({{ college.university.name }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Instructor</label>
+            <select name="instructor_id" class="form-control select2-dropdown">
+                <option value="">-- None --</option>
+                {% for instructor in all_instructors %}<option value="{{ instructor.id }}" {% if instructor.id == item.instructor_id %}selected{% endif %}>{{ instructor.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Currency</label>
+            <select name="currency_id" class="form-control select2-dropdown" required>
+                {% for currency in all_currencies %}<option value="{{ currency.id }}" {% if currency.id == item.currency_id %}selected{% endif %}>{{ currency.code }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+                        <!-- --- FOOTER BUTTONS --- -->
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-fill btn-primary">Save Changes</button>
+                            <a href="{{ url_for('settings') }}" class="btn btn-secondary">Cancel</a>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on any dropdowns on this page
+        $('.select2-dropdown').select2({
+            theme: "bootstrap4"
+        });
+
+        // --- START OF NEW DYNAMIC SUBJECT FORM LOGIC ---
+
+        // This logic only runs if we are editing a Subject
+        {% if item_type == 'Subject' %}
+            const termWrapper = $('#term-input-wrapper');
+            const moduleWrapper = $('#module-input-wrapper');
+            const collegeSelect = $('#subject-college-select');
+
+            function updateFormFields(collegeId) {
+                if (collegeId) {
+                    fetch(`/api/get_college_structure/${collegeId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.structure_type === 'term') {
+                                termWrapper.slideDown(200);
+                                moduleWrapper.slideUp(200);
+                            } else if (data.structure_type === 'module') {
+                                termWrapper.slideUp(200);
+                                moduleWrapper.slideDown(200);
+                            }
+                        })
+                        .catch(error => console.error('Error fetching college structure:', error));
+                } else {
+                    termWrapper.slideUp(200);
+                    moduleWrapper.slideUp(200);
+                }
+            }
+
+            // Run the function once when the page loads to set the initial state
+            const initialCollegeId = collegeSelect.val();
+            updateFormFields(initialCollegeId);
+
+            // Also run the function every time the college selection changes
+            collegeSelect.on('change', function() {
+                const selectedCollegeId = $(this).val();
+                updateFormFields(selectedCollegeId);
+            });
+        {% endif %}
+        // --- END OF NEW DYNAMIC SUBJECT FORM LOGIC ---
+    });
+</script>
+{% endblock javascripts %}

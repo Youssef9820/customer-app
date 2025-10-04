@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Corrected paths for icons -->
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='assets/img/apple-icon.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/img/favicon.png') }}">
+    
+    <title>Customer App - {% block title %}{% endblock %}</title>
+    
+    <!-- Fonts and icons -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,600,700,800" rel="stylesheet"/>
+    <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+    
+    <!-- Corrected paths for CSS Files -->
+    <link href="{{ url_for('static', filename='assets/css/nucleo-icons.css' ) }}" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='assets/css/black-dashboard.css') }}?v=1.0.0" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='assets/css/theme-switcher.css') }}" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='assets/demo/demo.css') }}" rel="stylesheet"/>
+
+    <!-- ... other CSS links ... -->
+<link href="{{ url_for('static', filename='assets/css/custom.css') }}" rel="stylesheet"/>
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+</head>
+<body class="">
+    <div class="wrapper">
+        {% include 'includes/sidebar.html' %}
+        <div class="main-panel">
+            {% include 'includes/navigation.html' %}
+            {% block content %}{% endblock content %}
+            {% include 'includes/footer.html' %}
+        </div>
+    </div>
+    {% include 'includes/fixed-plugin.html' %}
+
+    <!-- ========================================================= -->
+    <!-- ================== CORE JAVASCRIPT FILES ================ -->
+    <!-- ========================================================= -->
+    <!-- All script paths have been corrected -->
+    <script src="{{ url_for('static', filename='assets/js/core/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/core/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/core/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/plugins/perfect-scrollbar.jquery.min.js') }}"></script>
+    
+    <!--  Google Maps Plugin (We can comment this out later if we don't need it) -->
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY_HERE"></script> -->
+    
+    <!-- Chart JS -->
+    <script src="{{ url_for('static', filename='assets/js/plugins/chartjs.min.js' ) }}"></script>
+    <!--  Notifications Plugin    -->
+    <script src="{{ url_for('static', filename='assets/js/plugins/bootstrap-notify.js') }}"></script>
+    <!-- Control Center for Black Dashboard: parallax effects, scripts for the example pages etc -->
+    <script src="{{ url_for('static', filename='assets/js/black-dashboard.min.js') }}?v=1.0.0"></script>
+    <!-- Black Dashboard DEMO methods, don't include it in your project! -->
+    <script src="{{ url_for('static', filename='assets/demo/demo.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+      $(document).ready(function() {
+        $().ready(function() {
+          $sidebar = $('.sidebar');
+          $navbar = $('.navbar');
+          $main_panel = $('.main-panel');
+
+          $full_page = $('.full-page');
+
+          $sidebar_responsive = $('body > .navbar-collapse');
+          sidebar_mini_active = true;
+          white_color = false;
+
+          window_width = $(window).width();
+
+          fixed_plugin_open = $('.sidebar .sidebar-wrapper .nav li.active a p').html();
+
+          $('.fixed-plugin a').click(function(event) {
+            if ($(this).hasClass('switch-trigger')) {
+              if (event.stopPropagation) {
+                event.stopPropagation();
+              } else if (window.event) {
+                window.event.cancelBubble = true;
+              }
+            }
+          });
+
+          $('.fixed-plugin .background-color span').click(function() {
+            $(this).siblings().removeClass('active');
+            $(this).addClass('active');
+
+            var new_color = $(this).data('color');
+
+            $sidebar.attr('data', new_color);
+            $main_panel.attr('data', new_color);
+            $navbar.attr('data', new_color);
+          });
+
+          $('.fixed-plugin .active-color span').click(function() {
+            $(this).siblings().removeClass('active');
+            $(this).addClass('active');
+
+            var new_color = $(this).data('color');
+
+            $sidebar.attr('data', new_color);
+            $main_panel.attr('data', new_color);
+            $navbar.attr('data', new_color);
+          });
+        });
+      });
+    </script>
+
+    {% block javascripts %}{% endblock javascripts %}
+
+</body>
+</html>

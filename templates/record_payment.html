@@ -1,0 +1,255 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Record New Payment {% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="title">Record New Payment</h5>
+                    <p class="category">Select a customer and the subject they are paying for.</p>
+                </div>
+                <div class="card-body">
+                                       <form action="{{ url_for('record_payment') }}" method="post">
+                        
+                        <!-- Step 1: Customer Selection -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Step 1: Select Customer</label>
+                                    <select id="customer-select" name="customer_id" class="form-control select2-dropdown" required>
+                                        <option value="">-- Search for a customer --</option>
+                                        {% for customer in all_customers %}
+                                            <!-- Store customer's college and year info directly on the option -->
+                                            <option value="{{ customer.id }}" 
+                                                    data-college-id="{{ customer.college_id }}" 
+                                                    data-year="{{ customer.year }}">
+                                                {{ customer.full_name }} ({{ customer.college.name }} - Year {{ customer.year }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Dynamic Subject Filters (Initially hidden) -->
+                        <div id="subject-filters-wrapper" style="display: none;">
+                            <hr>
+                            <p class="category">Step 2: Select Subject</p>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>College</label>
+                                        <!-- This will be disabled and auto-filled -->
+                                        <input type="text" id="college-display" class="form-control" disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <!-- This wrapper will contain either the term or module dropdown -->
+                                    <div id="structure-wrapper">
+                                        <div id="term-select-wrapper" style="display: none;">
+                                            <div class="form-group">
+                                                <label>Select Term</label>
+                                                <select id="term-select" class="form-control select2-dropdown"></select>
+                                            </div>
+                                        </div>
+                                        <div id="module-select-wrapper" style="display: none;">
+                                            <div class="form-group">
+                                                <label>Select Module</label>
+                                                <select id="module-select" class="form-control select2-dropdown"></select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Select Subject</label>
+                                        <select id="subject-select" name="subject_id" class="form-control select2-dropdown" required>
+                                            <option value="">-- Select Term/Module First --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Payment Details (Initially hidden) -->
+                        <div id="payment-details-wrapper" style="display: none;">
+                            <hr>
+                            <p class="category">Step 3: Enter Payment Details</p>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Course Price Paid</label>
+                                        <input type="number" step="0.01" id="course_price_paid" name="course_price_paid" class="form-control" value="0" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Application Price Paid</label>
+                                        <input type="number" step="0.01" id="app_price_paid" name="app_price_paid" class="form-control" value="0" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Payment Method</label>
+                                        <select name="payment_method_id" class="form-control select2-dropdown" required>
+                                            {% for method in all_payment_methods %}
+                                                <option value="{{ method.id }}">{{ method.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Notes (Optional)</label>
+                                        <textarea name="notes" class="form-control" rows="3" placeholder="e.g., Paid in cash, discount applied, etc."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer text-right">
+                            <button type="submit" class="btn btn-fill btn-success">Save Payment</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Initialize all dropdowns on this page
+        $('.select2-dropdown').select2({
+            theme: "bootstrap4"
+        });
+
+        // --- START OF NEW DYNAMIC PAYMENT FORM LOGIC ---
+        const customerSelect = $('#customer-select');
+        const filtersWrapper = $('#subject-filters-wrapper');
+        const paymentWrapper = $('#payment-details-wrapper');
+        
+        const collegeDisplay = $('#college-display');
+        const termWrapper = $('#term-select-wrapper');
+        const moduleWrapper = $('#module-select-wrapper');
+        const termSelect = $('#term-select');
+        const moduleSelect = $('#module-select');
+        const subjectSelect = $('#subject-select');
+
+        // Function to fetch and populate subjects
+        function fetchSubjects() {
+            const selectedCustomer = customerSelect.find('option:selected');
+            const collegeId = selectedCustomer.data('college-id');
+            const year = selectedCustomer.data('year');
+            const termId = termSelect.val();
+            const moduleId = moduleSelect.val();
+            const structureType = collegeDisplay.data('structure');
+
+            subjectSelect.empty().append('<option value="">Loading...</option>').trigger('change');
+
+            let apiUrl = `/api/get_subjects?college_id=${collegeId}&year=${year}`;
+            if (structureType === 'term' && termId) {
+                apiUrl += `&term_id=${termId}`;
+            } else if (structureType === 'module' && moduleId) {
+                apiUrl += `&module_id=${moduleId}`;
+            } else {
+                subjectSelect.empty().append('<option value="">-- Select Term/Module --</option>').trigger('change');
+                return;
+            }
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    subjectSelect.empty().append('<option value="">-- Select Subject --</option>');
+                    data.subjects.forEach(sub => {
+                        const option = new Option(sub.name, sub.id);
+                        $(option).data('course-price', sub.course_price);
+                        $(option).data('app-price', sub.app_price);
+                        subjectSelect.append(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // 1. When a Customer is selected, the main logic starts
+        customerSelect.on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const collegeId = selectedOption.data('college-id');
+            const year = selectedOption.data('year');
+            const collegeName = selectedOption.text().split('(')[1].replace(')', ''); // Extract college name from text
+
+            // Reset everything
+            filtersWrapper.hide();
+            paymentWrapper.hide();
+            termWrapper.hide();
+            moduleWrapper.hide();
+
+            if (collegeId && year) {
+                // Show the filter section
+                filtersWrapper.slideDown(300);
+                collegeDisplay.val(collegeName); // Show the customer's college
+
+                // Fetch the college's structure type (term or module)
+                fetch(`/api/get_college_structure/${collegeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        collegeDisplay.data('structure', data.structure_type); // Store structure type
+
+                        if (data.structure_type === 'term') {
+                            // Fetch the terms for this customer's college and year
+                            fetch(`/api/get_terms/${collegeId}/${year}`)
+                                .then(response => response.json())
+                                .then(termData => {
+                                    termSelect.empty().append('<option value="">-- Select Term --</option>');
+                                    termData.terms.forEach(term => {
+                                        termSelect.append(new Option(term.name, term.id));
+                                    });
+                                    termWrapper.show();
+                                });
+                        } else if (data.structure_type === 'module') {
+                            // Fetch the modules for this customer's college and year
+                            fetch(`/api/get_modules/${collegeId}/${year}`)
+                                .then(response => response.json())
+                                .then(moduleData => {
+                                    moduleSelect.empty().append('<option value="">-- Select Module --</option>');
+                                    moduleData.modules.forEach(module => {
+                                        moduleSelect.append(new Option(module.name, module.id));
+                                    });
+                                    moduleWrapper.show();
+                                });
+                        }
+                    });
+            }
+        });
+
+        // 2. When Term or Module changes, fetch the subjects
+        termSelect.on('change', fetchSubjects);
+        moduleSelect.on('change', fetchSubjects);
+
+        // 3. When the final Subject is selected, show payment details and auto-fill prices
+        subjectSelect.on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const coursePrice = selectedOption.data('course-price') || 0;
+            const appPrice = selectedOption.data('app-price') || 0;
+
+            if (selectedOption.val()) {
+                paymentWrapper.slideDown(300);
+                $('#course_price_paid').val(coursePrice);
+                $('#app_price_paid').val(appPrice);
+            } else {
+                paymentWrapper.slideUp(300);
+            }
+        });
+        // --- END OF DYNAMIC PAYMENT FORM LOGIC ---
+    });
+</script>
+{% endblock javascripts %}

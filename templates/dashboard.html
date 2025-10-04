@@ -1,0 +1,401 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block content %}
+
+<div class="content">
+    <!-- Row 1: Statistic Cards (Enhanced with Animations) -->
+    <div class="row">
+        <!-- Your Original Stat Cards -->
+        <div class="col-lg-2 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="info-icon text-center icon-warning">
+                                <i class="tim-icons icon-single-02"></i>
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <div class="numbers">
+                                <p class="card-category">Customers</p>
+                                <h3 class="card-title">{{ total_customers }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="info-icon text-center icon-primary">
+                                <i class="tim-icons icon-bank"></i>
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <div class="numbers">
+                                <p class="card-category">Universities</p>
+                                <h3 class="card-title">{{ total_universities }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="info-icon text-center icon-success">
+                                <i class="tim-icons icon-istanbul"></i>
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <div class="numbers">
+                                <p class="card-category">Colleges</p>
+                                <h3 class="card-title">{{ total_colleges }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="info-icon text-center icon-danger">
+                                <i class="tim-icons icon-world"></i>
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <div class="numbers">
+                                <p class="card-category">Countries</p>
+                                <h3 class="card-title">{{ total_countries }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- New Stat Cards -->
+        <div class="col-lg-2 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="info-icon text-center icon-info">
+                                <i class="tim-icons icon-notes"></i>
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <div class="numbers">
+                                <p class="card-category">Subjects</p>
+                                <h3 class="card-title">{{ total_subjects }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="info-icon text-center icon-badge">
+                                <i class="tim-icons icon-badge"></i>
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <div class="numbers">
+                                <p class="card-category">Instructors</p>
+                                <h3 class="card-title">{{ total_instructors }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Charts (Enhanced Styling) -->
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-category">Growth Analytics</h5>
+                    <h3 class="card-title">
+                        <i class="tim-icons icon-chart-line-up text-primary"></i> New Customers per Month
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="lineChartBig"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-category">Distribution</h5>
+                            <h3 class="card-title mb-0">
+                                <i class="tim-icons icon-chart-pie-36 text-success"></i> Customer Breakdown
+                            </h3>
+                        </div>
+                        <div style="min-width: 180px;">
+                            <select id="chart-selector" class="form-control">
+                                <option value="customers_by_country">By Country</option>
+                                <option value="customers_by_uni">By University</option>
+                                <option value="customers_by_year">By Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="dynamicPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Enhanced Recent Customers Table -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-category">Latest Activity</h5>
+                    <h4 class="card-title">
+                        <i class="tim-icons icon-badge text-primary"></i> Recently Added Customers
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table tablesorter">
+                            <thead class="text-primary">
+                                <tr>
+                                    <th>Full Name</th>
+                                    <th>College</th>
+                                    <th>University</th>
+                                    <th class="text-center">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in recent_customers %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('customer_profile', customer_id=customer.id) }}">
+                                            {{ customer.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ customer.college.name }}</td>
+                                    <td>{{ customer.college.university.name }}</td>
+                                    <td class="text-center">{{ customer.email or 'N/A' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No customers found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    // Enhanced Select2 with Dark Theme
+    $('#chart-selector').select2({
+        theme: 'bootstrap4',
+        minimumResultsForSearch: -1,
+        width: '100%'
+    });
+
+    // Data Injected from Flask
+    const allChartData = {{ chart_data|tojson }};
+    const timeLabels = {{ time_labels|tojson }};
+    const timeData = {{ time_data|tojson }};
+
+    // Enhanced Dynamic Pie/Doughnut Chart
+    const ctxPie = document.getElementById("dynamicPieChart").getContext('2d');
+    const dynamicPieChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: { 
+            labels: [], 
+            datasets: [] 
+        },
+        options: {
+            responsive: true, 
+            maintainAspectRatio: false,
+            legend: { 
+                display: true,
+                position: 'bottom',
+                labels: {
+                    fontColor: '#ffffff',
+                    fontSize: 12,
+                    padding: 15,
+                    usePointStyle: true
+                }
+            },
+            tooltips: {
+                backgroundColor: '#1e1e2f',
+                titleFontColor: '#ffffff',
+                bodyFontColor: '#ced4da',
+                borderColor: '#5e72e4',
+                borderWidth: 2,
+                cornerRadius: 8,
+                displayColors: true,
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        const label = data.labels[tooltipItem.index];
+                        const value = data.datasets[0].data[tooltipItem.index];
+                        const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return ` ${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true,
+                duration: 1000,
+                easing: 'easeOutQuart'
+            },
+            cutoutPercentage: 70
+        }
+    });
+
+    function updatePieChart(chartId) {
+        const selectedData = allChartData[chartId];
+        dynamicPieChart.data.labels = selectedData.labels;
+        dynamicPieChart.data.datasets = [{
+            data: selectedData.data,
+            backgroundColor: [
+                '#5e72e4', '#2dce89', '#f5365c', '#fb6340', 
+                '#11cdef', '#ffd600', '#f3a4b5', '#9467bd'
+            ],
+            borderWidth: 0,
+            hoverBorderWidth: 3,
+            hoverBorderColor: '#fff'
+        }];
+        dynamicPieChart.update();
+    }
+
+    $('#chart-selector').on('change', function() {
+        updatePieChart($(this).val());
+    });
+    updatePieChart($('#chart-selector').val());
+
+    // Enhanced Big Line Chart with Gradient
+    const ctxLine = document.getElementById("lineChartBig").getContext("2d");
+    const gradientStroke = ctxLine.createLinearGradient(0, 230, 0, 50);
+    gradientStroke.addColorStop(1, 'rgba(94,114,228,0.3)');
+    gradientStroke.addColorStop(0.4, 'rgba(94,114,228,0.1)');
+    gradientStroke.addColorStop(0, 'rgba(94,114,228,0)');
+    
+    const lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: "New Customers",
+                fill: true,
+                backgroundColor: gradientStroke,
+                borderColor: '#5e72e4',
+                borderWidth: 3,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: '#5e72e4',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointBorderWidth: 3,
+                pointHoverRadius: 6,
+                pointHoverBorderWidth: 3,
+                pointRadius: 5,
+                pointHoverBorderColor: '#5e72e4',
+                data: timeData,
+            }]
+        },
+        options: {
+            ...demo.gradientChartOptionsConfiguration,
+            tooltips: {
+                backgroundColor: '#1e1e2f',
+                titleFontColor: '#ffffff',
+                bodyFontColor: '#ced4da',
+                borderColor: '#5e72e4',
+                borderWidth: 2,
+                cornerRadius: 8,
+                displayColors: true
+            },
+            legend: {
+                display: false
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        fontColor: "rgba(255,255,255,0.4)",
+                        fontSize: 13,
+                        padding: 10
+                    },
+                    gridLines: {
+                        drawBorder: false,
+                        color: 'rgba(255,255,255,0.05)',
+                        zeroLineColor: "transparent",
+                    }
+                }],
+                xAxes: [{
+                    gridLines: {
+                        drawBorder: false,
+                        color: 'rgba(255,255,255,0.05)',
+                        zeroLineColor: "transparent",
+                    },
+                    ticks: {
+                        padding: 10,
+                        fontColor: "rgba(255,255,255,0.4)",
+                        fontSize: 13,
+                    }
+                }]
+            }
+        }
+    });
+
+    // Animate numbers on load
+    $('.card-title').each(function() {
+        const $this = $(this);
+        const countTo = parseInt($this.text());
+        if (!isNaN(countTo)) {
+            $({ countNum: 0 }).animate({
+                countNum: countTo
+            }, {
+                duration: 1500,
+                easing: 'swing',
+                step: function() {
+                    $this.text(Math.floor(this.countNum));
+                },
+                complete: function() {
+                    $this.text(this.countNum);
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

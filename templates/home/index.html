@@ -1,0 +1,75 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-chart">
+                <div class="card-header ">
+                    <h2 class="card-title">Welcome to Your Customer App</h2>
+                    <h4 class="card-category">This is your main dashboard. Use the sidebar to navigate.</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card card-tasks">
+                <div class="card-header">
+                    <h4 class="card-title">Next Steps</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-full-width table-responsive">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <p class="title">Add organizational data</p>
+                                        <p class="text-muted">Use the 'Data Management' page to add countries, universities, and colleges.</p>
+                                    </td>
+                                    <td class="td-actions text-right">
+                                        <a href="{{ url_for('manage') }}" class="btn btn-link" title="Go to page">
+                                            <i class="tim-icons icon-forward"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p class="title">Add a new customer</p>
+                                        <p class="text-muted">Use the 'Add Customer' page to create a new customer record.</p>
+                                    </td>
+                                    <td class="td-actions text-right">
+                                        <a href="{{ url_for('add_customer_page') }}" class="btn btn-link" title="Go to page">
+                                            <i class="tim-icons icon-forward"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p class="title">View all customers</p>
+                                        <p class="text-muted">Our next step will be to build a page to see all customers in the database.</p>
+                                    </td>
+                                    <td class="td-actions text-right">
+                                        <button type="button" rel="tooltip" title="" class="btn btn-link" data-original-title="Edit Task" disabled>
+                                            <i class="tim-icons icon-pencil"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

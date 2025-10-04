@@ -1,0 +1,500 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Manage Data {% endblock %}
+
+{% block content %}
+<div class="content">
+     {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    <span>{{ message }}</span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Section for Adding New Items -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="title">Add New Data</h5>
+                </div>
+                <!-- REPLACE THE EXISTING card-body FOR "Add New Data" WITH THIS -->
+<div class="card-body">
+    <!-- Add Country Form -->
+    <form action="{{ url_for('add_country') }}" method="post">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Country Name</label>
+                    <input type="text" name="country_name" class="form-control" placeholder="e.g., Egypt" required>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-fill btn-primary">Add Country</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <hr>
+    <!-- Add University Form -->
+    <form action="{{ url_for('add_university') }}" method="post">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Select Country</label>
+                    <select id="country_select_for_uni" name="country_id" class="form-control" required>
+                        <option value="">-- Select --</option>
+                        {% for country in countries %}
+                        <option value="{{ country.id }}">{{ country.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>University Name</label>
+                    <input type="text" name="university_name" class="form-control" placeholder="e.g., Cairo University" required>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-fill btn-primary">Add University</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <hr>
+    <!-- Add College Form -->
+    <form action="{{ url_for('add_college') }}" method="post">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Select University</label>
+                    <select id="university_select_for_college" name="university_id" class="form-control" required>
+                        <option value="">-- Select --</option>
+                        {% for university in universities %}
+                        <option value="{{ university.id }}">{{ university.name }} ({{ university.country.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>College Name</label>
+                    <input type="text" name="college_name" class="form-control" placeholder="e.g., Faculty of Engineering" required>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-fill btn-primary">Add College</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- ... after the closing </form> tag for "Add College" ... -->
+    <hr>
+    <!-- ============================================================ -->
+    <!-- NEW: ADD INSTRUCTOR FORM                                     -->
+    <!-- ============================================================ -->
+    <form action="{{ url_for('add_instructor') }}" method="post">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Instructor Name</label>
+                    <input type="text" name="instructor_name" class="form-control" placeholder="e.g., Dr. Ahmed" required>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Instructor Email (Optional)</label>
+                    <input type="email" name="instructor_email" class="form-control" placeholder="ahmed@example.com">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-fill btn-primary">Add Instructor</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <hr>
+    <!-- ============================================================ -->
+    <!-- NEW: ADD SUBJECT FORM                                        -->
+    <!-- ============================================================ -->
+    <form action="{{ url_for('add_subject') }}" method="post">
+        <div class="row">
+            <!-- Column 1: Subject Details -->
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Subject Name</label>
+                    <input type="text" name="subject_name" class="form-control" placeholder="e.g., Anatomy 101" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Year</label>
+                            <input type="number" name="year" class="form-control" placeholder="e.g., 1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Term (Optional)</label>
+                            <input type="text" name="term" class="form-control" placeholder="e.g., Term 1">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Module (Optional)</label>
+                    <input type="text" name="module" class="form-control" placeholder="e.g., Cardiovascular">
+                </div>
+            </div>
+            <!-- Column 2: Pricing and Links -->
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Default Course Price</label>
+                            <input type="number" step="0.01" name="course_price" class="form-control" value="0" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Default Application Price</label>
+                            <input type="number" step="0.01" name="app_price" class="form-control" value="0" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>College</label>
+                    <select name="college_id" class="form-control" required>
+                        <option value="">-- Select College --</option>
+                        {% for college in colleges %}
+                            <option value="{{ college.id }}">{{ college.name }} ({{ college.university.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Instructor</label>
+                    <select name="instructor_id" class="form-control">
+                        <option value="">-- None --</option>
+                        {% for instructor in instructors %}
+                            <option value="{{ instructor.id }}">{{ instructor.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select name="currency_id" class="form-control" required>
+                        {% for currency in currencies %}
+                            <option value="{{ currency.id }}">{{ currency.code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-right">
+                <button type="submit" class="btn btn-fill btn-primary">Add Subject</button>
+            </div>
+        </div>
+    </form>
+<!-- ... this should be followed by the closing </div> of the card-body ... -->
+
+</div>
+
+<!-- END OF REPLACEMENT -->
+ <div class="card">
+    <div class="card-header">
+        <h5 class="title">Import Customers from File</h5>
+    </div>
+    <div class="card-body">
+        <p class="category">
+            Upload an Excel (.xlsx) or CSV (.csv) file with the following columns: 
+            <strong>full_name, email, whatsapp_number, year, country, university, college</strong>.
+        </p>
+        <p class="category">
+            The system will match the country, university, and college names to existing records.
+            <a href="{{ url_for('static', filename='assets/sample/sample_import.xlsx') }}">Download a sample template file.</a>
+        </p>
+        <hr>    
+        <form action="{{ url_for('import_customers') }}" method="post" enctype="multipart/form-data">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label for="import_file" class="btn btn-fill btn-primary">Choose File</label>
+                        <input type="file" name="import_file" id="import_file" required class="d-none">
+                        <span id="file-chosen" class="pl-3">No file chosen</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-fill btn-success">
+                        <i class="tim-icons icon-upload"></i> Upload and Import
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- ============================================================ -->
+<!-- END OF NEW CARD                                              -->
+<!-- ============================================================ -->
+
+            <!-- NEW: Interactive Accordion for Managing Existing Data -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="title">Manage Existing Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="manageDataAccordion">
+
+                        <!-- Accordion Item for Countries -->
+                        <div class="card bg-dark">
+                            <div class="card-header" id="headingCountries">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link text-white" type="button" data-toggle="collapse" data-target="#collapseCountries" aria-expanded="true" aria-controls="collapseCountries">
+                                        Manage Countries
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseCountries" class="collapse" aria-labelledby="headingCountries" data-parent="#manageDataAccordion">
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table tablesorter">
+                                            <tbody>
+                                                {% for country in countries %}
+                                                <tr>
+                                                    <td>{{ country.name }}</td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('edit_country', country_id=country.id) }}" class="btn btn-sm btn-success">Edit</a>
+                                                        <form action="{{ url_for('delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure? Deleting a country will also delete all its universities, colleges, and customers.');">
+                                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Accordion Item for Universities -->
+                        <div class="card bg-dark">
+                            <div class="card-header" id="headingUniversities">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseUniversities" aria-expanded="false" aria-controls="collapseUniversities">
+                                        Manage Universities
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseUniversities" class="collapse" aria-labelledby="headingUniversities" data-parent="#manageDataAccordion">
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table tablesorter">
+                                            <tbody>
+                                                {% for university in universities %}
+                                                <tr>
+                                                    <td>{{ university.name }} <small class="text-muted">({{ university.country.name }})</small></td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('edit_university', university_id=university.id) }}" class="btn btn-sm btn-success">Edit</a>
+                                                        <form action="{{ url_for('delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Accordion Item for Colleges -->
+                    <div class="card bg-dark">
+                        <div class="card-header" id="headingColleges">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseColleges" aria-expanded="false" aria-controls="collapseColleges">
+                                    Manage Colleges
+                                </button>
+                            </h5>
+                        </div>
+                        <div id="collapseColleges" class="collapse" aria-labelledby="headingColleges" data-parent="#manageDataAccordion">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table tablesorter">
+                                        <tbody>
+                                            {% for college in colleges %}
+                                            <tr>
+                                                <td>{{ college.name }} <small class="text-muted">({{ college.university.name }})</small></td>
+                                                <td class="text-right">
+                                                    <a href="{{ url_for('edit_college', college_id=college.id) }}" class="btn btn-sm btn-success">Edit</a>
+                                                    <form action="{{ url_for('delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ... after the closing </div> for "Accordion Item for Colleges" ... -->
+
+<!-- ============================================================ -->
+<!-- NEW: ACCORDION ITEM FOR INSTRUCTORS                          -->
+<!-- ============================================================ -->
+<div class="card bg-dark">
+    <div class="card-header" id="headingInstructors">
+        <h5 class="mb-0">
+            <button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseInstructors" aria-expanded="false" aria-controls="collapseInstructors">
+                Manage Instructors
+            </button>
+        </h5>
+    </div>
+    <div id="collapseInstructors" class="collapse" aria-labelledby="headingInstructors" data-parent="#manageDataAccordion">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table tablesorter">
+                    <tbody>
+                        {% for instructor in instructors %}
+                        <tr>
+                            <td>{{ instructor.name }} <small class="text-muted">({{ instructor.email or 'No Email' }})</small></td>
+                            <td class="text-right">
+    <a href="{{ url_for('edit_instructor', instructor_id=instructor.id) }}" class="btn btn-sm btn-success">Edit</a>
+    <form action="{{ url_for('delete_instructor', instructor_id=instructor.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+    </form>
+</td>
+
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- NEW: ACCORDION ITEM FOR SUBJECTS                             -->
+<!-- ============================================================ -->
+<div class="card bg-dark">
+    <div class="card-header" id="headingSubjects">
+        <h5 class="mb-0">
+            <button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseSubjects" aria-expanded="false" aria-controls="collapseSubjects">
+                Manage Subjects
+            </button>
+        </h5>
+    </div>
+    <div id="collapseSubjects" class="collapse" aria-labelledby="headingSubjects" data-parent="#manageDataAccordion">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table tablesorter">
+                    <thead class="text-primary">
+                        <tr>
+                            <th>Subject</th>
+                            <th>College</th>
+                            <th>Price</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td>{{ subject.name }} <small class="text-muted">(Year {{ subject.year }})</small></td>
+                            <td>{{ subject.college.name }}</td>
+                            <td>{{ "%.2f"|format(subject.default_course_price + subject.default_application_price) }} {{ subject.currency.symbol }}</td>
+                            <td class="text-right">
+    <a href="{{ url_for('edit_subject', subject_id=subject.id) }}" class="btn btn-sm btn-success">Edit</a>
+    <form action="{{ url_for('delete_subject', subject_id=subject.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+    </form>
+</td>
+
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ... this should be followed by the closing </div> of the accordion ... -->
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot HTML for notifications -->
+    <div id="chatbot-container" class="chatbot-hidden">
+        <img src="{{ url_for('static', filename='assets/img/chat.jpg') }}" alt="عبدالمطلب" class="chatbot-avatar">
+        <div class="chatbot-message">
+            <strong class="chatbot-name">عبدالمطلب</strong>
+            <p id="chatbot-text"></p>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+    // This script is for the chatbot notifications on this page
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- NEW: Activate Select2 on our dropdowns ---
+        // We give each dropdown a unique ID to target it
+        $('#country_select_for_uni').select2({
+            theme: "bootstrap4" // Use a theme that matches Bootstrap
+        });
+        $('#university_select_for_college').select2({
+            theme: "bootstrap4"
+        });
+        // --- END OF NEW PART ---
+    const importFileInput = document.getElementById('import_file');
+    const fileChosenSpan = document.getElementById('file-chosen');
+     importFileInput.addEventListener('change', function(){
+        fileChosenSpan.textContent = this.files[0].name;
+    });
+
+        function showChatbotMessage(text, type = 'success') {
+            const chatbotContainer = document.getElementById('chatbot-container');
+            const chatbotText = document.getElementById('chatbot-text');
+            chatbotContainer.classList.remove('chatbot-success', 'chatbot-danger');
+            if (type === 'success') {
+                chatbotContainer.classList.add('chatbot-success');
+            } else if (type === 'danger') {
+                chatbotContainer.classList.add('chatbot-danger');
+            }
+            chatbotText.textContent = text;
+            chatbotContainer.classList.remove('chatbot-hidden');
+            chatbotContainer.classList.add('chatbot-visible');
+            setTimeout(() => {
+                chatbotContainer.classList.remove('chatbot-visible');
+                chatbotContainer.classList.add('chatbot-hidden');
+            }, 5000);
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get('message');
+        const messageType = urlParams.get('type');
+        if (message) {
+            showChatbotMessage(message, messageType);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
+</script>
+{% endblock javascripts %}

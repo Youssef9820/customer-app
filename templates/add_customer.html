@@ -1,0 +1,273 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Add New Customer {% endblock %}
+
+{% block content %}
+
+
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="float-right">
+                        <button id="activate-assistant-btn" class="btn btn-primary btn-sm">
+                            <i class="tim-icons icon-sound-wave"></i> Activate Voice Command
+                        </button>
+                    </div>
+                    <h5 class="title">Add New Customer</h5>
+                    <p class="category">Fill in the customer's details</p>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('add_customer') }}" method="post">
+                        <!-- Form rows -->
+                        <div class="row">
+                            <div class="col-md-4 pr-md-1">
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <select id="country" name="country_id" class="form-control" required>
+                                        <option value="">-- Select a Country --</option>
+                                        {% for country in countries %}
+                                            <option value="{{ country.id }}">{{ country.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4 px-md-1">
+                                <div class="form-group">
+                                    <label>University</label>
+                                    <select id="university" name="university_id" class="form-control" required>
+                                        <option value="">-- Select a University --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4 pl-md-1">
+                                <div class="form-group">
+                                    <label>College</label>
+                                    <select id="college" name="college_id" class="form-control" required>
+                                        <option value="">-- Select a College --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8 pr-md-1">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" name="full_name" class="form-control" placeholder="Full Name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4 pl-md-1">
+                                <div class="form-group">
+                                    <label>Year</label>
+                                    <input type="test" name="year" class="form-control" placeholder="e.g., 1,2">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 pr-md-1">
+                                <div class="form-group">
+                                    <label>Email address</label>
+                                    <input type="email" name="email" class="form-control" placeholder="mike@email.com">
+                                </div>
+                            </div>
+                            <div class="col-md-6 pl-md-1">
+                                <div class="form-group">
+                                    <label>WhatsApp Number</label>
+                                    <input type="text" name="whatsapp_number" class="form-control" placeholder="WhatsApp Number">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-fill btn-primary">Add Customer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chatbot HTML -->
+<div id="chatbot-container" class="chatbot-hidden">
+    <img src="{{ url_for('static', filename='assets/img/chat.jpg') }}" alt="عبدالمطلب" class="chatbot-avatar">
+    <div class="chatbot-message">
+        <strong class="chatbot-name">عبدالمطلب</strong>
+        <p id="chatbot-text"></p>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // --- NEW: SELECT2 INITIALIZATION ---
+    // Apply the dark theme to all three dropdowns on this page
+    $('#country').select2({ theme: "bootstrap4" });
+    $('#university').select2({ theme: "bootstrap4" });
+    $('#college').select2({ theme: "bootstrap4" });
+    // --- END OF NEW PART ---
+
+    // --- SINGLE, COMBINED SET OF ELEMENT SELECTORS ---
+    const countrySelect = document.getElementById('country');
+    const universitySelect = document.getElementById('university');
+    const collegeSelect = document.getElementById('college');
+    const nameInput = document.querySelector('input[name="full_name"]');
+    const yearInput = document.querySelector('input[name="year"]');
+    const emailInput = document.querySelector('input[name="email"]');
+    const phoneInput = document.querySelector('input[name="whatsapp_number"]');
+    const assistantBtn = document.getElementById('activate-assistant-btn');
+
+    // --- VOICE RECOGNITION SETUP ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        assistantBtn.disabled = true;
+        assistantBtn.textContent = "Voice Recognition Not Supported";
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = true;
+    recognition.interimResults = true; // Changed for better responsiveness
+
+    let isListening = false;
+    let finalTranscript = '';
+
+    assistantBtn.addEventListener('click', () => {
+        if (isListening) {
+            recognition.stop();
+        } else {
+            finalTranscript = '';
+            assistantBtn.innerHTML = '<i class="tim-icons icon-button-power"></i> Listening... (Click to Stop)';
+            recognition.start();
+        }
+    });
+
+    recognition.onstart = () => { isListening = true; };
+
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            } else {
+                interimTranscript += event.results[i][0].transcript;
+            }
+        }
+        console.log("Interim:", interimTranscript);
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        assistantBtn.innerHTML = '<i class="tim-icons icon-sound-wave"></i> Activate Voice Command';
+        console.log("Final Transcript:", finalTranscript);
+
+        if (finalTranscript.toLowerCase().includes("هاي عبد المطلب")) { // Use toLowerCase for flexibility
+            let dataFound = false;
+
+            // --- NEW: Multilingual Regular Expressions ---
+            const nameMatch = finalTranscript.match(/(الاسم|name) ([\s\S]+?)(?= الايميل| الواتساب| السنة| الكلية| الجامعة| البلد|email|whatsapp|year|college|university|$)/i);
+            const yearMatch = finalTranscript.match(/(السنة|year) ([\s\S]+?)(?= الايميل| الواتساب| الاسم| الكلية| الجامعة| البلد|email|whatsapp|name|college|university|$)/i);
+            const emailMatch = finalTranscript.match(/(الايميل|email) ([\s\S]+?)(?= الاسم| الواتساب| السنة| الكلية| الجامعة| البلد|whatsapp|year|name|college|university|$)/i);
+            const phoneMatch = finalTranscript.match(/(الواتساب|واتساب|number|الرقم|whatsapp) ([\s\S]+?)(?= الاسم| الايميل| السنة| الكلية| الجامعة| البلد|name|email|year|college|university|$)/i);
+            
+            const countryMatch = finalTranscript.match(/(البلد|country) ([\s\S]+?)(?= الايميل| الواتساب| السنة| الكلية| الجامعة| الاسم|email|whatsapp|year|college|university|name|$)/i);
+            const universityMatch = finalTranscript.match(/(الجامعة|university) ([\s\S]+?)(?= الايميل| الواتساب| السنة| الكلية| البلد| الاسم|email|whatsapp|year|college|country|name|$)/i);
+            const collegeMatch = finalTranscript.match(/(الكلية|college) ([\s\S]+?)(?= الايميل| الواتساب| السنة| الجامعة| البلد| الاسم|email|whatsapp|year|university|country|name|$)/i);
+
+            if (nameMatch && nameMatch[2]) { nameInput.value = nameMatch[2].trim(); dataFound = true; }
+            if (yearMatch && yearMatch[2]) { yearInput.value = yearMatch[2].trim(); dataFound = true; }
+            if (emailMatch && emailMatch[2]) { let email = emailMatch[2].trim().replace(/\s/g, '').replace('ات', '@').replace('دوت', '.'); emailInput.value = email; dataFound = true; }
+            if (phoneMatch && phoneMatch[2]) { let phone = phoneMatch[2].trim().replace(/\s/g, ''); phoneInput.value = phone; dataFound = true; }
+
+            if (countryMatch && countryMatch[2]) {
+                const spokenCountry = countryMatch[2].trim().toLowerCase();
+                for (let option of countrySelect.options) {
+                    if (option.text.toLowerCase().includes(spokenCountry)) {
+                        option.selected = true;
+                        // Use jQuery to trigger the change for Select2
+                        $(countrySelect).trigger('change');
+                        dataFound = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (dataFound) {
+                showChatbotMessage("تم ملء البيانات. يرجى المراجعة والضغط على إضافة.");
+            } else {
+                showChatbotMessage("أنا أستمع، ولكن لم أفهم أي بيانات لأضيفها.");
+            }
+
+        } else if (finalTranscript.trim() !== '') {
+            showChatbotMessage("لم أسمع كلمة التفعيل. يرجى المحاولة مرة أخرى.");
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        isListening = false;
+    };
+
+    function showChatbotMessage(text) {
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const chatbotText = document.getElementById('chatbot-text');
+        chatbotText.textContent = text;
+        chatbotContainer.classList.remove('chatbot-hidden');
+        chatbotContainer.classList.add('chatbot-visible');
+        setTimeout(() => {
+            chatbotContainer.classList.remove('visible');
+            chatbotContainer.classList.add('hidden');
+        }, 5000);
+    }
+
+    // --- DROPDOWN LOGIC (FOR MANUAL FILLING) ---
+    // This part needs to use jQuery to work with Select2
+    $('#country').on('change', function() {
+        const countryId = this.value;
+        const $universitySelect = $('#university');
+        const $collegeSelect = $('#college');
+
+        $universitySelect.empty().append('<option value="">-- Select a University --</option>').trigger('change');
+        $collegeSelect.empty().append('<option value="">-- Select a College --</option>').trigger('change');
+
+        if (countryId) {
+            fetch(`/get_universities/${countryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.universities.forEach(uni => {
+                        const option = new Option(uni.name, uni.id);
+                        $universitySelect.append(option);
+                    });
+                    $universitySelect.trigger('change');
+                });
+        }
+    });
+
+    $('#university').on('change', function() {
+        const universityId = this.value;
+        const $collegeSelect = $('#college');
+        
+        $collegeSelect.empty().append('<option value="">-- Select a College --</option>').trigger('change');
+
+        if (universityId) {
+            fetch(`/get_colleges/${universityId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.colleges.forEach(col => {
+                        const option = new Option(col.name, col.id);
+                        $collegeSelect.append(option);
+                    });
+                    $collegeSelect.trigger('change');
+                });
+        }
+    });
+});
+</script>
+
+{% endblock javascripts %}

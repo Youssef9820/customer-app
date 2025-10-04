@@ -1,0 +1,296 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} View Customers {% endblock %}
+
+{% block content %}
+
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="title">Customer List</h5>
+                    <p class="category">Filter and search for customers</p>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- START: Filters and Search Bars -->
+                    <div class="row">
+                        <!-- Hierarchical Filters -->
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Country</label>
+                                <select id="filter-country" class="form-control select2-dropdown">
+                                    <option value="">All</option>
+                                    {% for country in countries %}
+                                        <option value="{{ country.id }}">{{ country.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>University</label>
+                               <select id="filter-university" class="form-control select2-dropdown">
+
+                                    <option value="">All</option>
+                                    <!-- Options will be loaded by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>College</label>
+                                <select id="filter-college" class="form-control select2-dropdown">
+
+                                    <option value="">All</option>
+                                    <!-- Options will be loaded by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Live Search Bars -->
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Search by Name</label>
+                                <input type="text" id="search-name" class="form-control" placeholder="Filter by name...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Search by Email</label>
+                                <input type="text" id="search-email" class="form-control" placeholder="Filter by email...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Search by Phone</label>
+                                <input type="text" id="search-phone" class="form-control" placeholder="Filter by phone...">
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <!-- END: Filters and Search Bars -->
+
+                    <div class="table-responsive">
+                        <table class="table tablesorter " id="customer-table"> <!-- Added an ID to the table -->
+                            <thead class=" text-primary">
+                                <tr>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>WhatsApp</th>
+                                    <th>Year</th>
+                                    <th>College</th>
+                                    <th>University</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <!-- The <tbody> will be updated by JavaScript -->
+                            <tbody>
+                                {% for customer in customers %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('customer_profile', customer_id=customer.id) }}">
+                                            {{ customer.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ customer.email or 'N/A' }}</td>
+                                    <td>{{ customer.whatsapp_number or 'N/A' }}</td>
+                                    <td>{{ customer.year or 'N/A' }}</td>
+                                    <td>{{ customer.college.name }}</td>
+                                    <td>{{ customer.college.university.name }}</td>
+                                   <td class="text-center">
+                                    <a href="{{ url_for('edit_customer', customer_id=customer.id) }}" class="btn btn-sm btn-success">Edit</a>
+                                    <form action="{{ url_for('delete_customer', customer_id=customer.id) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this customer?');">Delete</button>
+                                    </form>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Chatbot HTML -->
+<div id="chatbot-container" class="chatbot-hidden">
+    <img src="{{ url_for('static', filename='assets/img/chat.jpg') }}" alt="عبدالمطلب" class="chatbot-avatar">
+    <div class="chatbot-message">
+        <strong class="chatbot-name">عبدالمطلب</strong>
+        <p id="chatbot-text"></p>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- We will add the JavaScript block here in the next step -->
+{% block javascripts %}
+{{ super() }} {# This includes the default scripts from the template #}
+
+<script>
+// Use jQuery's document ready function for better compatibility with Select2
+$(document).ready(function() {
+    // Initialize Select2 on all dropdowns with this class
+    $('.select2-dropdown').select2({
+        theme: "bootstrap4"
+    });
+
+    // --- Element Selectors ---
+    const countryFilter = document.getElementById('filter-country');
+    //...
+
+    const universityFilter = document.getElementById('filter-university');
+    const collegeFilter = document.getElementById('filter-college');
+    const nameSearch = document.getElementById('search-name');
+    const emailSearch = document.getElementById('search-email');
+    const phoneSearch = document.getElementById('search-phone');
+    const customerTableBody = document.querySelector('#customer-table tbody');
+
+  function updateSelect(selectElement, options, placeholder) {
+    const $select = $(selectElement); // Get the jQuery version of the element
+    $select.empty(); // Use jQuery's empty() method
+    
+    // Add the placeholder
+    $select.append(new Option(placeholder, ''));
+
+    // Add the new options
+    options.forEach(option => {
+        $select.append(new Option(option.name, option.id));
+    });
+
+    // Trigger the change event for Select2 to re-render
+    $select.trigger('change');
+}
+
+// --- Logic for Flash Messages via Chatbot ---
+    function showChatbotMessage(text, type = 'success') {
+    const chatbotContainer = document.getElementById('chatbot-container');
+    const chatbotText = document.getElementById('chatbot-text');
+
+    // Remove old color classes
+    chatbotContainer.classList.remove('chatbot-success', 'chatbot-danger');
+    
+    // Add the new color class based on the type
+    if (type === 'success') {
+        chatbotContainer.classList.add('chatbot-success');
+    } else if (type === 'danger') {
+        chatbotContainer.classList.add('chatbot-danger');
+    }
+
+    chatbotText.textContent = text;
+    chatbotContainer.classList.remove('chatbot-hidden');
+    chatbotContainer.classList.add('chatbot-visible');
+
+    setTimeout(() => {
+        chatbotContainer.classList.remove('chatbot-visible');
+        chatbotContainer.classList.add('chatbot-hidden');
+    }, 5000);
+}
+
+// Check the URL for a message when the page loads
+const urlParams = new URLSearchParams(window.location.search);
+const message = urlParams.get('message');
+const messageType = urlParams.get('type');
+
+if (message) {
+    showChatbotMessage(message, messageType);
+    // Optional: Clean the URL so the message doesn't reappear on refresh
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+// --- End of Flash Message Logic ---
+
+    // --- Main function to fetch and render customers ---
+    function fetchAndRenderCustomers() {
+        const params = new URLSearchParams({
+            country_id: countryFilter.value,
+            university_id: universityFilter.value,
+            college_id: collegeFilter.value,
+            name: nameSearch.value,
+            email: emailSearch.value,
+            phone: phoneSearch.value
+        });
+
+        fetch(`/api/filter_customers?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                customerTableBody.innerHTML = ''; // Clear the table
+                if (data.customers.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="7" class="text-center">No customers found.</td>`;
+                    customerTableBody.appendChild(row);
+                } else {
+                    data.customers.forEach(customer => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${customer.full_name}</td>
+                            <td>${customer.email}</td>
+                            <td>${customer.whatsapp_number}</td>
+                            <td>${customer.year}</td>
+                            <td>${customer.college_name}</td>
+                            <td>${customer.university_name}</td>
+                          <td class="text-center">
+    <a href="/edit_customer/${customer.id}" class="btn btn-sm btn-success">Edit</a>
+    <form action="/delete_customer/${customer.id}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this customer?');">Delete</button>
+    </form>
+</td>
+                        `;
+                        customerTableBody.appendChild(row);
+                    });
+                }
+            });
+    }
+
+    // --- Event Listeners for Dynamic Dropdowns ---
+  // --- Event Listeners for Dynamic Dropdowns (jQuery version for Select2) ---
+$('#filter-country').on('change', function() {
+    const countryId = $(this).val(); // Use jQuery's .val()
+    // We don't need to manually update the dropdowns here,
+    // the next fetch will do it.
+    if (countryId) {
+        fetch(`/get_universities/${countryId}`)
+            .then(response => response.json())
+            .then(data => {
+                updateSelect(universityFilter, data.universities, 'All');
+                // IMPORTANT: Clear the college filter when the country changes
+                updateSelect(collegeFilter, [], 'All');
+            });
+    } else {
+        // If "All" countries is selected, clear both lower dropdowns
+        updateSelect(universityFilter, [], 'All');
+        updateSelect(collegeFilter, [], 'All');
+    }
+    fetchAndRenderCustomers(); // Re-filter when country changes
+});
+
+
+$('#filter-university').on('change', function() {
+    const universityId = $(this).val(); // Use jQuery's .val()
+    if (universityId) {
+        fetch(`/get_colleges/${universityId}`)
+            .then(response => response.json())
+            .then(data => updateSelect(collegeFilter, data.colleges, 'All'));
+    } else {
+        // If "All" universities is selected, clear the college dropdown
+        updateSelect(collegeFilter, [], 'All');
+    }
+    fetchAndRenderCustomers(); // Re-filter when university changes
+});
+
+
+    // --- Event Listeners for all filters ---
+    collegeFilter.addEventListener('change', fetchAndRenderCustomers);
+    
+    // Use 'keyup' for live search as the user types
+    nameSearch.addEventListener('keyup', fetchAndRenderCustomers);
+    emailSearch.addEventListener('keyup', fetchAndRenderCustomers);
+    phoneSearch.addEventListener('keyup', fetchAndRenderCustomers);
+
+    // Initial load of customers when the page is ready
+    // fetchAndRenderCustomers(); // You can uncomment this if you want the table to load empty initially
+});
+</script>
+
+{% endblock javascripts %}

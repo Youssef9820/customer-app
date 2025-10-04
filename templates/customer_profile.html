@@ -1,0 +1,267 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Profile: {{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="row">
+        <!-- Left Column for Core Info -->
+        <div class="col-lg-4">
+            <div class="card card-user" style="height: 95%;">
+                <div class="card-body">
+                    <p class="card-text"></p>
+                    <div class="author">
+                        <div class="block block-one"></div>
+                        <div class="block block-two"></div>
+                        <div class="block block-three"></div>
+                        <a href="javascript:void(0)">
+                            <i class="tim-icons icon-single-02 fa-3x mb-2"></i>
+                            <h4 class="title">{{ customer.full_name }}</h4>
+                        </a>
+                        <p class="description">
+                            Student at {{ customer.college.university.name }}
+                        </p>
+                    </div>
+                    <div class="card-description mt-4" style="line-height: 2;">
+                        <i class="tim-icons icon-square-pin mr-2"></i> <strong>College:</strong> {{ customer.college.name }}   
+
+                        <i class="tim-icons icon-hat-3 mr-2"></i> <strong>Year:</strong> {{ customer.year or 'N/A' }}   
+
+                        <hr style="border-color: rgba(255,255,255,0.1);">
+                        <i class="tim-icons icon-email-85 mr-2"></i> <strong>Email:</strong> {{ customer.email or 'N/A' }}   
+
+                        <i class="tim-icons icon-mobile mr-2"></i> <strong>WhatsApp:</strong> {{ customer.whatsapp_number or 'N/A' }}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="button-container">
+                        <a href="{{ url_for('edit_customer', customer_id=customer.id) }}" class="btn btn-primary btn-round btn-lg">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column for KPI Stats -->
+        <div class="col-lg-8">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="stat-card stat-revenue">
+                        <div class="stat-icon"><i class="tim-icons icon-wallet-43"></i></div>
+                        <div class="stat-content">
+                            <p class="stat-label">Total Amount Paid</p>
+                            <h3 class="stat-value">{{ "%.2f"|format(total_paid) }} <span>EGP</span></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card stat-students">
+                        <div class="stat-icon"><i class="tim-icons icon-bullet-list-67"></i></div>
+                        <div class="stat-content">
+                            <p class="stat-label">Total Payments Made</p>
+                            <h3 class="stat-value">{{ total_payments_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="stat-card stat-subjects">
+                        <div class="stat-icon"><i class="tim-icons icon-notes"></i></div>
+                        <div class="stat-content">
+                            <p class="stat-label">Subjects Enrolled</p>
+                            <h3 class="stat-value">{{ total_subjects_enrolled }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="tim-icons icon-calendar-60"></i></div>
+                        <div class="stat-content">
+                            <p class="stat-label">First Payment Date</p>
+                            <h3 class="stat-value" style="font-size: 24px;">
+                                {{ first_payment_date.strftime('%b %d, %Y') if first_payment_date else 'N/A' }}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+       <!-- The Main Tabbed Interface Card -->
+    <div class="card instructor-report-card mt-4">
+        <ul class="nav nav-tabs instructor-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="history-tab" data-toggle="tab" href="#history" role="tab">
+                    <i class="tim-icons icon-refresh-01"></i> Payment History
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="log-tab" data-toggle="tab" href="#log" role="tab">
+                    <i class="tim-icons icon-chat-33"></i> Notes
+                </a>
+            </li>
+        </ul>
+        <div class="tab-content instructor-tab-content">
+            <!-- Tab 1: Payment History -->
+            <div class="tab-pane fade show active" id="history" role="tabpanel">
+                {% if payment_history %}
+                <div class="accordion report-accordion" id="yearAccordion">
+                    <!-- Level 1: Loop through Years -->
+                    {% for year, year_data in payment_history.items()|sort(reverse=True) %}
+                    <div class="accordion-card mb-3">
+                        <div class="accordion-header">
+                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-year-{{ year }}">
+                                <span class="accordion-title"><i class="tim-icons icon-calendar-60"></i> Year {{ year }}</span>
+                                <span class="accordion-badge badge-success">{{ "%.2f"|format(year_data.total) }} EGP</span>
+                            </button>
+                        </div>
+                        <div id="collapse-year-{{ year }}" class="collapse show" data-parent="#yearAccordion">
+                            <div class="accordion-body nested-accordion">
+                                <!-- Level 2: Loop through Terms -->
+                                {% if year_data.terms %}
+                                <div class="accordion" id="termAccordion-{{ year }}">
+                                    {% for term_name, term_data in year_data.terms.items() %}
+                                    <div class="accordion-card">
+                                        <div class="accordion-header">
+                                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-term-{{ year }}-{{ loop.index }}">
+                                                <span class="accordion-title"><i class="tim-icons icon-bullet-list-67"></i> {{ term_name }}</span>
+                                                <span class="accordion-badge badge-info">{{ "%.2f"|format(term_data.total) }} EGP</span>
+                                            </button>
+                                        </div>
+                                        <div id="collapse-term-{{ year }}-{{ loop.index }}" class="collapse" data-parent="#termAccordion-{{ year }}">
+                                            <div class="accordion-body">
+                                                <!-- Level 3: Loop through Subjects in this Term -->
+                                                {% for subject_id, subject_data in term_data.subjects.items() %}
+                                                <h6>{{ subject_data.details.name }}</h6>
+                                                <table class="report-table mb-3">
+                                                    <thead><tr><th>Date</th><th>Method</th><th class="text-right">Amount Paid</th></tr></thead>
+                                                    <tbody>
+                                                        {% for p in subject_data.payments %}
+                                                        <tr>
+                                                            <td>{{ p.payment_date.strftime('%Y-%m-%d') }}</td>
+                                                            <td>{{ p.payment_method.name }}</td>
+                                                            <td class="text-right">{{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <!-- Level 2: Loop through Modules -->
+                                {% if year_data.modules %}
+                                <div class="accordion" id="moduleAccordion-{{ year }}">
+                                    {% for module_name, module_data in year_data.modules.items() %}
+                                    <div class="accordion-card">
+                                        <div class="accordion-header">
+                                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-module-{{ year }}-{{ loop.index }}">
+                                                <span class="accordion-title"><i class="tim-icons icon-vector"></i> {{ module_name }}</span>
+                                                <span class="accordion-badge badge-primary">{{ "%.2f"|format(module_data.total) }} EGP</span>
+                                            </button>
+                                        </div>
+                                        <div id="collapse-module-{{ year }}-{{ loop.index }}" class="collapse" data-parent="#moduleAccordion-{{ year }}">
+                                            <div class="accordion-body">
+                                                <!-- Level 3: Loop through Subjects in this Module -->
+                                                {% for subject_id, subject_data in module_data.subjects.items() %}
+                                                <h6>{{ subject_data.details.name }}</h6>
+                                                <table class="report-table mb-3">
+                                                    <thead><tr><th>Date</th><th>Method</th><th class="text-right">Amount Paid</th></tr></thead>
+                                                    <tbody>
+                                                        {% for p in subject_data.payments %}
+                                                        <tr>
+                                                            <td>{{ p.payment_date.strftime('%Y-%m-%d') }}</td>
+                                                            <td>{{ p.payment_method.name }}</td>
+                                                            <td class="text-right">{{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="enhanced-empty-state">
+                    <div class="empty-icon"><i class="tim-icons icon-coins"></i></div>
+                    <h4>No Payment History</h4>
+                    <p>This student has not made any payments yet.</p>
+                </div>
+                {% endif %}
+            </div>
+   
+            <!-- Tab 2: Notes -->
+            <div class="tab-pane fade" id="log" role="tabpanel">
+                <!-- Form to Add a New Note -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h5><i class="tim-icons icon-simple-add"></i> Add a New Note</h5>
+                    </div>
+                    <form action="{{ url_for('add_note', customer_id=customer.id) }}" method="POST">
+                        <div class="form-group-enhanced">
+                            <textarea name="note_content" class="form-control-enhanced" rows="4" placeholder="Type your note here... (e.g., Called to follow up, interested in new module, etc.)" required></textarea>
+                        </div>
+                        <div class="text-right">
+                            <button type="submit" class="btn-settings-primary">
+                                <i class="tim-icons icon-check-2"></i> Save Note
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Timeline of Existing Notes -->
+                <div class="section-header mt-5">
+                    <h5><i class="tim-icons icon-bullet-list-67"></i> Notes History</h5>
+                </div>
+
+                {% if customer.comm_logs.order_by(CommunicationLog.creation_date.desc()).all() %}
+                    <ul class="timeline">
+                        {% for note in customer.comm_logs.order_by(CommunicationLog.creation_date.desc()).all() %}
+                        <li>
+                            <div class="timeline-badge">
+                                <i class="tim-icons icon-chat-33"></i>
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <span class="badge badge-pill badge-info">{{ note.creation_date.strftime('%Y-%m-%d %H:%M') }}</span>
+                                </div>
+                                <div class="timeline-body">
+                                    <p>{{ note.content }}</p>
+                                </div>
+                                <div class="timeline-footer">
+                                    <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this note?');">
+                                        <button type="submit" class="btn btn-link text-danger p-0">
+                                            <i class="tim-icons icon-trash-simple"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="enhanced-empty-state">
+                        <div class="empty-icon"><i class="tim-icons icon-notes"></i></div>
+                        <h4>No Notes Yet</h4>
+                        <p>Add a note using the form above to start building a communication history.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

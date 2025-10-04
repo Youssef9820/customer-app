@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} All Payments {% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">All Payments</h4>
+                    <p class="category">A complete history of all recorded transactions, sorted by most recent.</p>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table tablesorter">
+                            <thead class="text-primary">
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Subject</th>
+                                    <th>Total Paid</th>
+                                    <th>Payment Method</th>
+                                    <th>Date</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">
+                                            {{ payment.customer.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ payment.subject.name }}</td>
+                                    <td>
+                                        {{ "%.2f"|format(payment.course_price_paid + payment.application_price_paid) }}
+                                        <span class="text-muted">{{ payment.subject.currency.symbol }}</span>
+                                    </td>
+                                    <td>{{ payment.payment_method.name }}</td>
+                                    <td>{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                                        <td class="text-right">
+                                        <!-- Actions like Edit/Delete Payment can be added here in the future -->
+                                    </td>
+
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No payments have been recorded yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
