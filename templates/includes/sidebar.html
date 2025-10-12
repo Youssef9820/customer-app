@@ -1,71 +1,76 @@
 <div class="sidebar">
     <div class="sidebar-wrapper">
         <div class="logo">
-            <a href="{{ url_for('index') }}" class="simple-text logo-mini">
+            <a href="{{ url_for('main.index') }}" class="simple-text logo-mini">
                 CA
             </a>
-            <a href="{{ url_for('index') }}" class="simple-text logo-normal">
+            <a href="{{ url_for('main.index') }}" class="simple-text logo-normal">
                 Customer App
             </a>
         </div>
 
-        {# This is the new conditional block. The menu will only appear if a user is logged in. #}
         {% if current_user.is_authenticated %}
         <ul class="nav">
 
             <!-- Link to Dashboard -->
-            <li class="{% if request.path == url_for('index') %} active {% endif %}">
-                <a href="{{ url_for('index') }}">
+            <li class="{% if request.path == url_for('main.index') %} active {% endif %}">
+                <a href="{{ url_for('main.index') }}">
                     <i class="tim-icons icon-chart-pie-36"></i>
                     <p>Dashboard</p>
                 </a>
             </li>
 
             <!-- Link to Add Customer -->
-            <li class="{% if request.path == url_for('add_customer_page') %} active {% endif %}">
-                <a href="{{ url_for('add_customer_page') }}">
+            <li class="{% if request.path == url_for('main.add_customer_page') %} active {% endif %}">
+                <a href="{{ url_for('main.add_customer_page') }}">
                     <i class="tim-icons icon-simple-add"></i>
                     <p>Add Customer</p>
                 </a>
             </li>
 
-                        <!-- Link to Record Payment -->
-            <li class="{% if request.path == url_for('record_payment_page') %} active {% endif %}">
-                <a href="{{ url_for('record_payment_page') }}">
+            <!-- Link to Record Payment -->
+            <li class="{% if request.path == url_for('main.record_payment_page') %} active {% endif %}">
+                <a href="{{ url_for('main.record_payment_page') }}">
                     <i class="tim-icons icon-money-coins"></i>
                     <p>Record Payment</p>
                 </a>
             </li>
 
-            <!-- === NEW LINK TO VIEW PAYMENTS === -->
-            <li class="{% if request.path == url_for('view_payments') %} active {% endif %}">
-                <a href="{{ url_for('view_payments') }}">
+            <!-- Link to View Payments -->
+            <li class="{% if request.path == url_for('main.view_payments') %} active {% endif %}">
+                <a href="{{ url_for('main.view_payments') }}">
                     <i class="tim-icons icon-paper"></i>
                     <p>View Payments</p>
                 </a>
             </li>
-            <!-- ================================= -->
 
             <!-- Link to View Customers -->
-            <li class="{% if request.path == url_for('view_customers') %} active {% endif %}">
-                <a href="{{ url_for('view_customers') }}">
+            <li class="{% if request.path == url_for('main.view_customers') %} active {% endif %}">
+                <a href="{{ url_for('main.view_customers') }}">
                     <i class="tim-icons icon-bullet-list-67"></i>
                     <p>View Customers</p>
                 </a>
             </li>
-
             
+            <!-- This one goes to the AUTH blueprint -->
+            <li>
+                <a href="{{ url_for('auth.admins') }}">
+                    <i class="tim-icons icon-single-02"></i>
+                    <p>Admins</p>
+                </a>
+            </li>
+
             <!-- Link to Segmentation Hub -->
-            <li class="{% if request.path == url_for('segmentation') %} active {% endif %}">
-                <a href="{{ url_for('segmentation') }}">
+            <li class="{% if request.path == url_for('main.segmentation') %} active {% endif %}">
+                <a href="{{ url_for('main.segmentation') }}">
                     <i class="tim-icons icon-zoom-split"></i>
                     <p>Segmentation</p>
                 </a>
             </li>
 
             <!-- Link to the NEW Settings Page -->
-            <li class="{% if request.path == url_for('settings') %} active {% endif %}">
-                <a href="{{ url_for('settings') }}">
+            <li class="{% if request.path == url_for('main.settings') %} active {% endif %}">
+                <a href="{{ url_for('main.settings') }}">
                     <i class="tim-icons icon-settings-gear-63"></i>
                     <p>Settings</p>
                 </a>
@@ -73,14 +78,13 @@
             
             <!-- Link to Reports -->
             <li class="{% if 'reports' in request.path %} active {% endif %}">
-                <a href="{{ url_for('reports_hub') }}">
+                <a href="{{ url_for('main.reports_hub') }}">
                     <i class="tim-icons icon-notes"></i>
                     <p>Reports</p>
                 </a>
             </li>
         </ul>
         {% endif %}
-        {# End of the conditional block #}
         
     </div>
 </div>

@@ -186,7 +186,6 @@ $(document).ready(function() {
         width: '100%'
     });
 
-    // --- START OF NEW DYNAMIC FILTER LOGIC ---
     const countrySelect = $('#country-filter');
     const universitySelect = $('#university-filter');
     const collegeSelect = $('#college-filter');
@@ -197,12 +196,26 @@ $(document).ready(function() {
     const moduleSelect = $('#module-filter');
     const subjectSelect = $('#subject-filter');
 
-    // --- Chained Dropdown Logic for Location ---
+    // --- URL DEFINITIONS ---
+    // Using hardcoded paths for reliability in JavaScript
+    const urls = {
+        getUniversities: '/get-universities-by-country/', // Note the trailing slash
+        getColleges: '/get-colleges-by-university/',
+        getCollegeYears: '/get-college-years/',
+        getCollegeStructure: '/get-college-structure/',
+        getTerms: '/get-terms/',
+        getModules: '/get-modules/',
+        getSubjects: `{{ url_for('main.get_subjects') }}`,
+        segmentStudents: `{{ url_for('main.segment_students') }}`,
+        customerProfile: `{{ url_for('main.customer_profile', customer_id=0) }}`,
+        exportSegment: `{{ url_for('main.export_segment_csv') }}`
+    };
+
     countrySelect.on('change', function() {
         const countryId = $(this).val();
         universitySelect.val(null).trigger('change').prop('disabled', true);
         if (countryId) {
-            $.getJSON(`/get_universities/${countryId}`, function(data) {
+            $.getJSON(urls.getUniversities + countryId, function(data) {
                 universitySelect.empty().append('<option value="">-- All Universities --</option>');
                 $.each(data.universities, function(key, entry) {
                     universitySelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
@@ -216,7 +229,7 @@ $(document).ready(function() {
         const universityId = $(this).val();
         collegeSelect.val(null).trigger('change').prop('disabled', true);
         if (universityId) {
-            $.getJSON(`/get_colleges/${universityId}`, function(data) {
+            $.getJSON(urls.getColleges + universityId, function(data) {
                 collegeSelect.empty().append('<option value="">-- All Colleges --</option>');
                 $.each(data.colleges, function(key, entry) {
                     collegeSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
@@ -226,18 +239,15 @@ $(document).ready(function() {
         }
     });
 
-    // --- NEW: Chained Logic for Academics ---
     collegeSelect.on('change', function() {
         const collegeId = $(this).val();
-        // Reset everything downstream
         yearSelect.val(null).trigger('change').prop('disabled', true);
         termWrapper.hide();
         moduleWrapper.hide();
         subjectSelect.val(null).trigger('change').prop('disabled', true);
 
         if (collegeId) {
-            // Fetch defined years for the college
-            $.getJSON(`/api/get_college_years/${collegeId}`, function(data) {
+            $.getJSON(urls.getCollegeYears + collegeId, function(data) {
                 yearSelect.empty().append('<option value="">-- All Years --</option>');
                 $.each(data.years, function(key, entry) {
                     yearSelect.append($('<option></option>').attr('value', entry.year_number).text(`Year ${entry.year_number}`));
@@ -247,17 +257,17 @@ $(document).ready(function() {
         }
     });
 
-    yearSelect.on('change', function() {
+    function updateAcademicFilters() {
         const collegeId = collegeSelect.val();
-        const year = $(this).val();
+        const year = yearSelect.val();
         termWrapper.hide();
         moduleWrapper.hide();
         subjectSelect.val(null).trigger('change').prop('disabled', true);
 
         if (collegeId && year) {
-            $.getJSON(`/api/get_college_structure/${collegeId}`, function(data) {
+            $.getJSON(urls.getCollegeStructure + collegeId, function(data) {
                 if (data.structure_type === 'term') {
-                    $.getJSON(`/api/get_terms/${collegeId}/${year}`, function(termData) {
+                    $.getJSON(`${urls.getTerms}${collegeId}/${year}`, function(termData) {
                         termSelect.empty().append('<option value="">-- All Terms --</option>');
                         $.each(termData.terms, function(key, entry) {
                             termSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
@@ -265,7 +275,7 @@ $(document).ready(function() {
                         termWrapper.show();
                     });
                 } else if (data.structure_type === 'module') {
-                    $.getJSON(`/api/get_modules/${collegeId}/${year}`, function(moduleData) {
+                    $.getJSON(`${urls.getModules}${collegeId}/${year}`, function(moduleData) {
                         moduleSelect.empty().append('<option value="">-- All Modules --</option>');
                         $.each(moduleData.modules, function(key, entry) {
                             moduleSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
@@ -275,9 +285,9 @@ $(document).ready(function() {
                 }
             });
         }
-    });
+        updateSubjectFilter();
+    }
 
-    // When year, term, or module changes, update the subject list
     function updateSubjectFilter() {
         const collegeId = collegeSelect.val();
         const year = yearSelect.val();
@@ -286,11 +296,11 @@ $(document).ready(function() {
         subjectSelect.val(null).trigger('change').prop('disabled', true);
 
         if (collegeId && year) {
-            let apiUrl = `/api/get_subjects?college_id=${collegeId}&year=${year}`;
-            if (termId) apiUrl += `&term_id=${termId}`;
-            if (moduleId) apiUrl += `&module_id=${moduleId}`;
+            let params = new URLSearchParams({ college_id: collegeId, year: year });
+            if (termId) params.append('term_id', termId);
+            if (moduleId) params.append('module_id', moduleId);
             
-            $.getJSON(apiUrl, function(data) {
+            $.getJSON(`${urls.getSubjects}?${params.toString()}`, function(data) {
                 subjectSelect.empty().append('<option value="">-- All Subjects --</option>');
                 $.each(data.subjects, function(key, entry) {
                     subjectSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
@@ -299,10 +309,10 @@ $(document).ready(function() {
             });
         }
     }
-    yearSelect.on('change', updateSubjectFilter);
+
+    yearSelect.on('change', updateAcademicFilters);
     termSelect.on('change', updateSubjectFilter);
     moduleSelect.on('change', updateSubjectFilter);
-    // --- END OF NEW DYNAMIC FILTER LOGIC ---
 
     let lastFilters = {};
 
@@ -316,17 +326,15 @@ $(document).ready(function() {
             university_id: universitySelect.val(),
             college_id: collegeSelect.val(),
             year: yearSelect.val(),
-            // === NEW: Send term/module IDs ===
             term_id: termSelect.val(),
             module_id: moduleSelect.val(),
-            // =================================
             subject_id: subjectSelect.val(),
             instructor_id: $('#instructor-filter').val(),
             payment_status: $('#payment-filter').val()
         };
 
         $.ajax({
-            url: '/api/segment_students',
+            url: urls.segmentStudents,
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(filters),
@@ -341,9 +349,10 @@ $(document).ready(function() {
 
                 if (students.length > 0) {
                     $.each(students, function(index, student) {
+                        const profileUrl = urls.customerProfile.replace('0', student.id);
                         const row = `
                             <tr>
-                                <td><a href="/customer/${student.id}">${student.full_name}</a></td>
+                                <td><a href="${profileUrl}">${student.full_name}</a></td>
                                 <td>${student.college_name}</td>
                                 <td>${student.year}</td>
                                 <td>${student.whatsapp_number}</td>
@@ -376,10 +385,9 @@ $(document).ready(function() {
                 params.append(key, lastFilters[key]);
             }
         }
-        const exportUrl = `/api/export_segment_csv?${params.toString()}`;
+        const exportUrl = `${urls.exportSegment}?${params.toString()}`;
         window.location.href = exportUrl;
     });
 });
-
 </script>
 {% endblock javascripts %}

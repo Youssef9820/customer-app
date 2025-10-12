@@ -1,215 +1,24 @@
-import os
-from datetime import datetime
-import pandas as pd
-# ADD 'flash' TO THIS LINE
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash 
+# app/main.py
+
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask_login import login_required
 from sqlalchemy import func
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload
+import pandas as pd
 import io
 import csv
-from flask import Response # Add Response to the flask import
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Response
+
+# Import models and db instance from the main application package
+from .models import Customer, University, College, Country, Subject, Instructor, Term, Module, Payment, CommunicationLog, Currency, PaymentMethod, CollegeYear
+from . import db
+
+# Create the blueprint
+main_bp = Blueprint('main', __name__)
 
 
-# 1. Initialize the Flask App
-app = Flask(__name__)
-
-# 2. Configure the App (Consolidated)
-# Check if the DATABASE_URL environment variable is set (it will be on Render)
-if os.environ.get('DATABASE_URL'):
-    # Use the Render PostgreSQL database
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
-else:
-    # Otherwise, use the local SQLite database for development
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///customers.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# ADD THE SECRET KEY HERE
-app.config['SECRET_KEY'] = 'a-super-secret-key-that-you-should-change' 
-
-# 3. Initialize the Database
-db = SQLAlchemy(app)
-
-# 2. INITIALIZE FLASK-LOGIN
-login_manager = LoginManager()
-login_manager.init_app(app)
-# If a user tries to access a protected page without being logged in,
-# redirect them to the 'signin' page.
-login_manager.login_view = 'signin'
-
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-
-    def set_password(self, password):
-        """Create a hashed password."""
-        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
-
-    def check_password(self, password):
-        """Check a hashed password."""
-        return check_password_hash(self.password_hash, password)
-    
-# 4. CREATE THE USER LOADER FUNCTION
-# This function is required by Flask-Login to load a user from the database.
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# 4. Define Database Models (The blueprint for our tables)
-class Country(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    universities = db.relationship('University', backref='country', lazy=True)
-
-class University(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=False)
-    colleges = db.relationship('College', backref='university', lazy=True)
-
-class College(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    university_id = db.Column(db.Integer, db.ForeignKey('university.id'), nullable=False)
-    customers = db.relationship('Customer', backref='college', lazy=True)
-    
-    # --- ADD THIS NEW LINE INSTEAD ---
-    structure_type = db.Column(db.String(50), default='term', nullable=False) # Will store 'term' or 'module'
-    # ----------------------------------
-
-
-
-class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(200), nullable=False)
-    whatsapp_number = db.Column(db.String(20), nullable=True)
-    email = db.Column(db.String(120), nullable=True)  # <-- FIXED: Now optional
-    year = db.Column(db.Integer, nullable=True)      # <-- NEW: Year added
-    college_id = db.Column(db.Integer, db.ForeignKey('college.id'), nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-# In app.py, add this new model class after the Payment class definition
-
-class CommunicationLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
-    # Foreign Key to link this log entry to a specific customer
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
-
-    # --- Relationship ---
-    # This allows us to easily access the customer from a log entry, e.g., my_log.customer
-    customer = db.relationship('Customer', backref=db.backref('comm_logs', lazy='dynamic', cascade="all, delete-orphan"))
-
-
-# =====================================================================
-# NEW MODELS FOR FINANCIALS AND ACADEMICS
-# =====================================================================
-
-class Currency(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(10), unique=True, nullable=False) # e.g., 'EGP', 'USD'
-    symbol = db.Column(db.String(5), nullable=False) # e.g., '£', '$'
-    subjects = db.relationship('Subject', backref='currency', lazy=True)
-
-class PaymentMethod(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False) # e.g., 'Cash', 'Credit Card', '(by app)'
-    payments = db.relationship('Payment', backref='payment_method', lazy=True)
-
-class Instructor(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    email = db.Column(db.String(150), unique=True, nullable=True)
-    subjects = db.relationship('Subject', backref='instructor', lazy=True)
-
-class Term(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    year = db.Column(db.Integer, nullable=False)
-    college_id = db.Column(db.Integer, db.ForeignKey('college.id'), nullable=False)
-    
-    # === ADD THIS RELATIONSHIP ===
-    college = db.relationship('College', backref=db.backref('terms', lazy=True))
-    
-    subjects = db.relationship('Subject', backref='term_info', lazy=True)
-    __table_args__ = (db.UniqueConstraint('name', 'college_id', 'year', name='_term_college_year_uc'),)
-
-class Module(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    year = db.Column(db.Integer, nullable=False)
-    college_id = db.Column(db.Integer, db.ForeignKey('college.id'), nullable=False)
-
-    # === ADD THIS RELATIONSHIP ===
-    college = db.relationship('College', backref=db.backref('modules', lazy=True))
-
-    subjects = db.relationship('Subject', backref='module_info', lazy=True)
-    __table_args__ = (db.UniqueConstraint('name', 'college_id', 'year', name='_module_college_year_uc'),)
-
-
-
-class Subject(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    year = db.Column(db.Integer, nullable=False)
-    
-    # === THESE TWO LINES ARE CHANGED ===
-    term_id = db.Column(db.Integer, db.ForeignKey('term.id'), nullable=True)
-    module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=True)
-    # ==================================
-    
-    # Default pricing structure
-    default_course_price = db.Column(db.Float, nullable=False, default=0)
-    default_application_price = db.Column(db.Float, nullable=False, default=0)
-
-    # --- Foreign Keys to link everything ---
-    college_id = db.Column(db.Integer, db.ForeignKey('college.id'), nullable=False)
-    instructor_id = db.Column(db.Integer, db.ForeignKey('instructor.id'), nullable=True) # Can be optional
-    currency_id = db.Column(db.Integer, db.ForeignKey('currency.id'), nullable=False)
-    
-    # --- Relationships ---
-    college = db.relationship('College', backref='subjects', lazy=True)
-    payments = db.relationship('Payment', backref='subject', lazy=True)
-
-
-class Payment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    
-    # The actual amounts paid in this specific transaction
-    course_price_paid = db.Column(db.Float, nullable=False, default=0)
-    application_price_paid = db.Column(db.Float, nullable=False, default=0)
-    
-    payment_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    notes = db.Column(db.Text, nullable=True)
-    
-    # --- Foreign Keys ---
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
-    payment_method_id = db.Column(db.Integer, db.ForeignKey('payment_method.id'), nullable=False)
-
-    # --- Relationships ---
-    customer = db.relationship('Customer', backref=db.backref('payments', lazy='dynamic'))
-
-# =====================================================================
-# END OF NEW MODELS
-# =====================================================================
-
-
-
-# ... (imports remain the same) ...
-
-# In app.py, replace the existing index() function
-
-# In app.py, replace the entire index() function
-
-@app.route('/')
+# This is the first route we are moving
+@main_bp.route('/')
 @login_required
 def index():
     # --- 1. Data for ORIGINAL Stat Cards ---
@@ -231,7 +40,6 @@ def index():
      .all()
 
     # --- 4. Data for NEW Switchable Distribution Chart (Non-Financial) ---
-    # Chart Option 1: Customers by Country
     customers_by_country = db.session.query(
         Country.name, 
         func.count(Customer.id)
@@ -241,7 +49,6 @@ def index():
      .group_by(Country.name)\
      .order_by(func.count(Customer.id).desc()).all()
 
-    # Chart Option 2: Customers by University
     customers_by_uni = db.session.query(
         University.name,
         func.count(Customer.id)
@@ -250,7 +57,6 @@ def index():
      .group_by(University.name)\
      .order_by(func.count(Customer.id).desc()).all()
 
-    # Chart Option 3: Customers by Year
     customers_by_year = db.session.query(
         Customer.year,
         func.count(Customer.id)
@@ -262,29 +68,23 @@ def index():
 
     # --- 6. Pass ALL data to the template ---
     return render_template('dashboard.html',
-                           # Original stat card data
                            total_customers=total_customers,
                            total_universities=total_universities,
                            total_colleges=total_colleges,
                            total_countries=total_countries,
-                           # New stat card data
                            total_subjects=total_subjects,
                            total_instructors=total_instructors,
-                           # Original growth chart data
                            time_labels=[item[0] for item in customers_over_time],
                            time_data=[item[1] for item in customers_over_time],
-                           # Original recent customers data
                            recent_customers=recent_customers,
-                           # New switchable chart data
                            chart_data={
                                'customers_by_country': {'labels': [i[0] for i in customers_by_country], 'data': [i[1] for i in customers_by_country]},
                                'customers_by_uni': {'labels': [i[0] for i in customers_by_uni], 'data': [i[1] for i in customers_by_uni]},
                                'customers_by_year': {'labels': [i[0] for i in customers_by_year], 'data': [i[1] for i in customers_by_year]}
                            })
 
-# In app.py, add this new route somewhere after the index() route
 
-@app.route('/segmentation')
+@main_bp.route('/segmentation')
 @login_required
 def segmentation():
     # Fetch all possible filter options for the dropdowns
@@ -297,7 +97,8 @@ def segmentation():
                            subjects=subjects,
                            instructors=instructors)
 
-@app.route('/settings')
+
+@main_bp.route('/settings')
 @login_required
 def settings():
     active_tab = request.args.get('active_tab', 'academic')
@@ -329,8 +130,22 @@ def settings():
                            active_tab=active_tab)
 
 
+@main_bp.route('/reports')
+@login_required
+def reports_hub():
+    # Fetch data for all report panels on the page
+    all_instructors = Instructor.query.order_by(Instructor.name).all()
+    all_universities = University.query.order_by(University.name).all()
+    # Eagerly load the university relationship to prevent extra queries in the template
+    all_colleges = College.query.options(joinedload(College.university)).order_by(College.name).all()
+    
+    return render_template('reports_hub.html', 
+                           instructors=all_instructors,
+                           all_universities=all_universities,
+                           all_colleges=all_colleges)
 
-@app.route('/add_country', methods=['POST'])
+
+@main_bp.route('/add_country', methods=['POST'])
 @login_required
 def add_country():
     name = request.form.get('country_name')
@@ -340,11 +155,10 @@ def add_country():
         db.session.commit()
         flash(f"Country '{name}' added successfully.", 'success')
     # This redirect will now trigger the chatbot
-    return redirect(url_for('settings', message=f"Country '{name}' added.", type='success', active_tab='academic'))
+    return redirect(url_for('main.settings', message=f"Country '{name}' added.", type='success', active_tab='academic'))
 
 
-
-@app.route('/add_university', methods=['POST'])
+@main_bp.route('/add_university', methods=['POST'])
 @login_required
 def add_university():
     
@@ -354,11 +168,10 @@ def add_university():
         new_university = University(name=name, country_id=country_id)
         db.session.add(new_university)
         db.session.commit()
-    return redirect(url_for('settings', message=f"University '{name}' added.", type='success', active_tab='academic'))
+    return redirect(url_for('main.settings', message=f"University '{name}' added.", type='success', active_tab='academic'))
 
 
-
-@app.route('/add_college', methods=['POST'])
+@main_bp.route('/add_college', methods=['POST'])
 @login_required
 def add_college():
     name = request.form.get('college_name')
@@ -376,36 +189,9 @@ def add_college():
         db.session.add(new_college)
         db.session.commit()
         
-    return redirect(url_for('settings', message=f"College '{name}' added.", type='success', active_tab='academic'))
+    return redirect(url_for('main.settings', message=f"College '{name}' added.", type='success', active_tab='academic'))
 
-
-# In app.py, after the College model
-
-class CollegeYear(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    year_number = db.Column(db.Integer, nullable=False)
-    
-    # Foreign Key to link to a specific college
-    college_id = db.Column(db.Integer, db.ForeignKey('college.id'), nullable=False)
-    
-    # Relationship to easily access the college from a year object
-    college = db.relationship('College', backref=db.backref('defined_years', lazy='dynamic', cascade="all, delete-orphan"))
-
-    # This ensures a year number is unique *within* a specific college
-    __table_args__ = (db.UniqueConstraint('year_number', 'college_id', name='_year_college_uc'),)
-
-@app.route('/api/get_college_structure/<int:college_id>')
-@login_required
-def get_college_structure(college_id):
-    college = College.query.get(college_id)
-    if college:
-        return jsonify({'structure_type': college.structure_type})
-    else:
-        return jsonify({'error': 'College not found'}), 404
-
-# In app.py, add these two new functions
-
-@app.route('/add_college_year', methods=['POST'])
+@main_bp.route('/add_college_year', methods=['POST'])
 @login_required
 def add_college_year():
     college_id = request.form.get('college_id')
@@ -423,30 +209,9 @@ def add_college_year():
             flash(f"Year {year_number} already exists for this college.", 'warning')
     else:
         flash("Both college and year number are required.", 'danger')
-    return redirect(url_for('settings', active_tab='structure'))
+    return redirect(url_for('main.settings', active_tab='structure'))
 
-
-@app.route('/delete_college_year/<int:year_id>', methods=['POST'])
-@login_required
-def delete_college_year(year_id):
-    year_to_delete = CollegeYear.query.get_or_404(year_id)
-    # Optional: Add a check here to prevent deleting a year that has terms/modules
-    db.session.delete(year_to_delete)
-    db.session.commit()
-    flash(f"Year {year_to_delete.year_number} has been deleted.", 'danger')
-    return redirect(url_for('settings', active_tab='structure'))
-
-# In app.py, add this new function
-
-@app.route('/api/get_college_years/<int:college_id>')
-@login_required
-def get_college_years(college_id):
-    years = CollegeYear.query.filter_by(college_id=college_id).order_by(CollegeYear.year_number).all()
-    year_list = [{'id': year.id, 'year_number': year.year_number} for year in years]
-    return jsonify({'years': year_list})
-
-
-@app.route('/add_instructor', methods=['POST'])
+@main_bp.route('/add_instructor', methods=['POST'])
 @login_required
 def add_instructor():
     name = request.form.get('instructor_name')
@@ -456,7 +221,7 @@ def add_instructor():
     
     if not name:
         flash('Instructor name is required.', 'danger')
-        return redirect(url_for('settings', message=f"Instructor '{name}' added.", type='success', active_tab='instructors'))
+        return redirect(url_for('main.settings', message=f"Instructor '{name}' added.", type='success', active_tab='instructors'))
 
 
     # Now, if the email was empty, we are saving None, which works with the UNIQUE constraint.
@@ -464,11 +229,10 @@ def add_instructor():
     db.session.add(new_instructor)
     db.session.commit()
     flash(f"Instructor '{name}' added successfully.", 'success')
-    return redirect(url_for('settings', message=f"Instructor '{name}' added.", type='success', active_tab='instructors'))
+    return redirect(url_for('main.settings', message=f"Instructor '{name}' added.", type='success', active_tab='instructors'))
 
-# In app.py
 
-@app.route('/add_term', methods=['POST'])
+@main_bp.route('/add_term', methods=['POST'])
 @login_required
 def add_term():
     name = request.form.get('term_name')
@@ -487,19 +251,9 @@ def add_term():
             flash(f"Term '{name}' already exists for this college and year.", 'warning')
     else:
         flash("College, term name, and year are all required.", 'danger')
-    return redirect(url_for('settings', active_tab='structure'))
+    return redirect(url_for('main.settings', active_tab='structure'))
 
-@app.route('/delete_term/<int:term_id>', methods=['POST'])
-@login_required
-def delete_term(term_id):
-    term_to_delete = Term.query.get_or_404(term_id)
-    # Optional: Add a check here to prevent deleting a term that is in use by subjects
-    db.session.delete(term_to_delete)
-    db.session.commit()
-    flash(f"Term '{term_to_delete.name}' has been deleted.", 'danger')
-    return redirect(url_for('settings', active_tab='structure'))
-
-@app.route('/add_module', methods=['POST'])
+@main_bp.route('/add_module', methods=['POST'])
 @login_required
 def add_module():
     name = request.form.get('module_name')
@@ -518,36 +272,9 @@ def add_module():
             flash(f"Module '{name}' already exists for this college and year.", 'warning')
     else:
         flash("College, module name, and year are all required.", 'danger')
-    return redirect(url_for('settings', active_tab='structure'))
+    return redirect(url_for('main.settings', active_tab='structure'))
 
-@app.route('/delete_module/<int:module_id>', methods=['POST'])
-@login_required
-def delete_module(module_id):
-    module_to_delete = Module.query.get_or_404(module_id)
-    # Optional: Add a check here to prevent deleting a module that is in use
-    db.session.delete(module_to_delete)
-    db.session.commit()
-    flash(f"Module '{module_to_delete.name}' has been deleted.", 'danger')
-    return redirect(url_for('settings', active_tab='structure'))
-# In app.py, add these two new functions
-
-@app.route('/api/get_terms/<int:college_id>/<int:year>')
-@login_required
-def get_terms(college_id, year):
-    terms = Term.query.filter_by(college_id=college_id, year=year).order_by(Term.name).all()
-    term_list = [{'id': term.id, 'name': term.name} for term in terms]
-    return jsonify({'terms': term_list})
-
-@app.route('/api/get_modules/<int:college_id>/<int:year>')
-@login_required
-def get_modules(college_id, year):
-    modules = Module.query.filter_by(college_id=college_id, year=year).order_by(Module.name).all()
-    module_list = [{'id': module.id, 'name': module.name} for module in modules]
-    return jsonify({'modules': module_list})
-
-
-
-@app.route('/add_subject', methods=['POST'])
+@main_bp.route('/add_subject', methods=['POST'])
 @login_required
 def add_subject():
     try:
@@ -573,24 +300,21 @@ def add_subject():
         db.session.rollback()
         flash(f"Error adding subject: {e}", 'danger')
         
-    return redirect(url_for('settings', active_tab='financial'))
+    return redirect(url_for('main.settings', active_tab='financial'))
 
-
-
-
-@app.route('/import_customers', methods=['POST'])
+@main_bp.route('/import_customers', methods=['POST'])
 @login_required
 def import_customers():
     if 'import_file' not in request.files:
         flash('No file part in the request.', 'danger')
-        return redirect(url_for('settings', message=success_message, type='success', active_tab='import'))
+        return redirect(url_for('main.settings', message=success_message, type='success', active_tab='import'))
 
 
     file = request.files['import_file']
 
     if file.filename == '':
         flash('No file selected for uploading.', 'danger')
-        return redirect(url_for('settings', active_tab='import'))
+        return redirect(url_for('main.settings', active_tab='import'))
 
     if file:
         try:
@@ -601,7 +325,7 @@ def import_customers():
                 df = pd.read_excel(file)
             else:
                 flash('Invalid file type. Please upload a .csv or .xlsx file.', 'danger')
-                return redirect(url_for('settings', active_tab='import'))
+                return redirect(url_for('main.settings', active_tab='import'))
 
             new_customers = []
             errors = []
@@ -640,7 +364,7 @@ def import_customers():
                 for error in errors:
                     flash(error, 'danger')
                 if not new_customers: # If all rows had errors
-                    return redirect(url_for('settings', active_tab='import'))
+                    return redirect(url_for('main.settings', active_tab='import'))
 
             # Add all valid new customers to the database
             db.session.bulk_save_objects(new_customers)
@@ -656,10 +380,10 @@ def import_customers():
             db.session.rollback()
             flash(f"An error occurred: {e}", 'danger')
 
-    return redirect(url_for('settings', active_tab='import'))
-# ... after the import_customers route ...
+    return redirect(url_for('main.settings', active_tab='import'))
 
-@app.route('/record_payment', methods=['GET'])
+
+@main_bp.route('/record_payment', methods=['GET'])
 @login_required
 def record_payment_page():
     # Fetch all the data needed for the dropdowns on the form
@@ -681,7 +405,7 @@ def record_payment_page():
 
 
 
-@app.route('/record_payment', methods=['POST'])
+@main_bp.route('/record_payment', methods=['POST'])
 @login_required
 def record_payment():
     try:
@@ -697,15 +421,15 @@ def record_payment():
         db.session.commit()
         flash('Payment recorded successfully!', 'success')
         # Redirect to a future customer profile page, or back to the form for now
-        return redirect(url_for('record_payment_page')) 
+        return redirect(url_for('main.record_payment_page')) 
     except Exception as e:
         db.session.rollback()
         flash(f"Error recording payment: {e}", 'danger')
-        return redirect(url_for('record_payment_page'))
+        return redirect(url_for('main.record_payment_page'))
 
 # In app.py, add this new function
 
-@app.route('/view_payments')
+@main_bp.route('/view_payments')
 @login_required
 def view_payments():
     # Query all payments, ordering by the most recent first.
@@ -719,13 +443,13 @@ def view_payments():
     
     return render_template('view_payments.html', payments=all_payments)
 
-@app.route('/add')
+@main_bp.route('/add')
 @login_required
 def add_customer_page():
     countries = Country.query.order_by(Country.name).all()
     return render_template('add_customer.html', countries=countries)
 
-@app.route('/add_customer', methods=['POST'])
+@main_bp.route('/add_customer', methods=['POST'])
 @login_required
 def add_customer():
     # This route saves the new customer to the database
@@ -739,9 +463,9 @@ def add_customer():
     db.session.add(new_customer)
     db.session.commit()
     # After adding, we'll redirect back to the homepage for now
-    return redirect(url_for('view_customers', message=f"Customer '{new_customer.full_name}' was added.", type='success'))
+    return redirect(url_for('main.view_customers', message=f"Customer '{new_customer.full_name}' was added.", type='success'))
 
-@app.route('/view')
+@main_bp.route('/view')
 @login_required
 def view_customers():
     # This query joins all the tables to get all the data we need
@@ -750,45 +474,8 @@ def view_customers():
     all_countries = Country.query.order_by(Country.name).all()
     return render_template('view_customers.html', customers=all_customers, countries=all_countries)
 
-# In app.py, add this new function
 
-@app.route('/api/get_subjects')
-@login_required
-def get_subjects():
-    # Get the filter criteria from the URL query parameters
-    college_id = request.args.get('college_id', type=int)
-    year = request.args.get('year', type=int)
-    term_id = request.args.get('term_id', type=int)
-    module_id = request.args.get('module_id', type=int)
-
-    # Start with a base query for all subjects
-    query = Subject.query
-
-    # Apply filters if they are provided
-    if college_id:
-        query = query.filter_by(college_id=college_id)
-    if year:
-        query = query.filter_by(year=year)
-    if term_id:
-        query = query.filter_by(term_id=term_id)
-    if module_id:
-        query = query.filter_by(module_id=module_id)
-
-    # Execute the final query
-    subjects = query.order_by(Subject.name).all()
-
-    # Convert the results into a list of dictionaries
-    subject_list = [{
-        'id': sub.id, 
-        'name': sub.name,
-        'course_price': sub.default_course_price,
-        'app_price': sub.default_application_price
-    } for sub in subjects]
-    
-    return jsonify({'subjects': subject_list})
-
-
-@app.route('/customer/<int:customer_id>')
+@main_bp.route('/customer/<int:customer_id>')
 @login_required
 def customer_profile(customer_id):
     customer = Customer.query.get_or_404(customer_id)
@@ -860,7 +547,7 @@ def customer_profile(customer_id):
                            CommunicationLog=CommunicationLog)
 
 
-@app.route('/customer/<int:customer_id>/add_note', methods=['POST'])
+@main_bp.route('/customer/<int:customer_id>/add_note', methods=['POST'])
 @login_required
 def add_note(customer_id):
     # Check if the customer exists
@@ -877,10 +564,10 @@ def add_note(customer_id):
         flash('Note content cannot be empty.', 'danger')
 
     # Redirect back to the same customer's profile page
-    return redirect(url_for('customer_profile', customer_id=customer_id))
+    return redirect(url_for('main.customer_profile', customer_id=customer_id))
 
 
-@app.route('/delete_note/<int:note_id>', methods=['POST'])
+@main_bp.route('/delete_note/<int:note_id>', methods=['POST'])
 @login_required
 def delete_note(note_id):
     # Find the note by its own ID
@@ -892,24 +579,9 @@ def delete_note(note_id):
     flash('Note deleted.', 'danger')
 
     # Redirect back to the original customer's profile page
-    return redirect(url_for('customer_profile', customer_id=customer_id))
+    return redirect(url_for('main.customer_profile', customer_id=customer_id))
 
-@app.route('/reports')
-@login_required
-def reports_hub():
-    # Fetch data for all report panels on the page
-    all_instructors = Instructor.query.order_by(Instructor.name).all()
-    all_universities = University.query.order_by(University.name).all()
-    # Eagerly load the university relationship to prevent extra queries in the template
-    all_colleges = College.query.options(joinedload(College.university)).order_by(College.name).all()
-    
-    return render_template('reports_hub.html', 
-                           instructors=all_instructors,
-                           all_universities=all_universities,
-                           all_colleges=all_colleges)
-
-
-@app.route('/instructor_report/<int:instructor_id>')
+@main_bp.route('/instructor_report/<int:instructor_id>')
 @login_required
 def instructor_report(instructor_id):
     instructor = Instructor.query.get_or_404(instructor_id)
@@ -998,7 +670,7 @@ def instructor_report(instructor_id):
                            location_revenue_data=location_revenue_data)
 
 
-@app.route('/application_report')
+@main_bp.route('/application_report')
 @login_required
 def application_report():
     # --- 1. Start with a base query for all payments with an application fee ---
@@ -1092,15 +764,234 @@ def application_report():
                            university_id_filter=university_id_filter,
                            college_id_filter=college_id_filter)
 
+@main_bp.route('/delete_customer/<int:customer_id>', methods=['POST'])
+@login_required
+def delete_customer(customer_id):
+    customer_to_delete = Customer.query.get_or_404(customer_id)
+    db.session.delete(customer_to_delete)
+    db.session.commit()
+    # We will add a flash message here later to confirm deletion
+    return redirect(url_for('main.view_customers', message='Customer has been deleted.', type='danger'))
 
-@app.route('/get_colleges/<int:university_id>')
+@main_bp.route('/edit_customer/<int:customer_id>', methods=['GET', 'POST'])
+@login_required
+def edit_customer(customer_id):
+    customer_to_edit = Customer.query.get_or_404(customer_id)
+    
+    if request.method == 'POST':
+        # This is the logic to UPDATE the customer in the database
+        customer_to_edit.full_name = request.form['full_name']
+        customer_to_edit.email = request.form.get('email')
+        customer_to_edit.whatsapp_number = request.form.get('whatsapp_number')
+        customer_to_edit.year = request.form.get('year', type=int)
+        customer_to_edit.college_id = request.form['college_id']
+        db.session.commit()
+        # We'll add a flash message here later
+        return redirect(url_for('main.view_customers', message=f"Customer '{customer_to_edit.full_name}' was updated.", type='success'))
+
+    # This is the logic to DISPLAY the pre-filled form (GET request)
+    all_countries = Country.query.order_by(Country.name).all()
+    return render_template('edit_customer.html', customer=customer_to_edit, countries=all_countries)
+
+@main_bp.route('/delete_country/<int:country_id>', methods=['POST'])
+@login_required
+def delete_country(country_id):
+    country_to_delete = Country.query.get_or_404(country_id)
+    
+    # This check prevents the app from crashing
+    if country_to_delete.universities:
+        message = f"Cannot delete '{country_to_delete.name}' because it has universities linked to it."
+        return redirect(url_for('main.settings', message=f"Country '{country_to_delete.name}' has been deleted.", type='danger', active_tab='academic'))
+
+        
+    db.session.delete(country_to_delete)
+    db.session.commit()
+    message = f"Country '{country_to_delete.name}' has been deleted."
+    return redirect(url_for('main.settings', message=message, type='success'))
+
+
+@main_bp.route('/delete_university/<int:university_id>', methods=['POST'])
+@login_required
+def delete_university(university_id):
+    university_to_delete = University.query.get_or_404(university_id)
+    db.session.delete(university_to_delete)
+    db.session.commit()
+    return redirect(url_for('main.settings', message=f"University '{university_to_delete.name}' has been deleted.", type='danger', active_tab='academic'))
+
+
+@main_bp.route('/delete_college/<int:college_id>', methods=['POST'])
+@login_required
+def delete_college(college_id):
+    college_to_delete = College.query.get_or_404(college_id)
+    db.session.delete(college_to_delete)
+    db.session.commit()
+    return redirect(url_for('main.settings', message=f"College '{college_to_delete.name}' has been deleted.", type='danger', active_tab='academic'))
+
+
+@main_bp.route('/delete_college_year/<int:year_id>', methods=['POST'])
+@login_required
+def delete_college_year(year_id):
+    year_to_delete = CollegeYear.query.get_or_404(year_id)
+    db.session.delete(year_to_delete)
+    db.session.commit()
+    flash(f"Year {year_to_delete.year_number} has been deleted.", 'danger')
+    return redirect(url_for('main.settings', active_tab='structure'))
+
+@main_bp.route('/edit_country/<int:country_id>', methods=['GET', 'POST'])
+@login_required
+def edit_country(country_id):
+    country = Country.query.get_or_404(country_id)
+    if request.method == 'POST':
+        country.name = request.form['name']
+        db.session.commit()
+        return redirect(url_for('main.settings', message='Country updated.', type='success', active_tab='academic'))
+
+    return render_template('edit_item.html', item=country, item_type='Country')
+
+@main_bp.route('/edit_university/<int:university_id>', methods=['GET', 'POST'])
+@login_required
+def edit_university(university_id):
+    university = University.query.get_or_404(university_id)
+    if request.method == 'POST':
+        university.name = request.form['name']
+        university.country_id = request.form['country_id'] 
+        db.session.commit()
+        return redirect(url_for('main.settings', message='University updated.', type='success', active_tab='academic'))
+
+    
+    all_countries = Country.query.order_by(Country.name).all()
+    return render_template('edit_item.html', item=university, item_type='University', all_countries=all_countries)
+
+
+
+@main_bp.route('/edit_college/<int:college_id>', methods=['GET', 'POST'])
+@login_required
+def edit_college(college_id):
+    college = College.query.get_or_404(college_id)
+    
+    if request.method == 'POST':
+        college.name = request.form['name']
+        college.university_id = request.form['university_id']
+        db.session.commit()
+        return redirect(url_for('main.settings', message='College updated.', type='success', active_tab='academic'))
+
+    
+    all_universities = University.query.order_by(University.name).all()
+    return render_template('edit_item.html', 
+                           item=college, 
+                           item_type='College', 
+                           all_universities=all_universities)
+
+
+@main_bp.route('/delete_instructor/<int:instructor_id>', methods=['POST'])
+@login_required
+def delete_instructor(instructor_id):
+    instructor = Instructor.query.get_or_404(instructor_id)
+    db.session.delete(instructor)
+    db.session.commit()
+    flash(f"Instructor '{instructor.name}' has been deleted.", 'danger')
+    return redirect(url_for('main.settings', message=f"Instructor '{instructor.name}' has been deleted.", type='danger', active_tab='instructors'))
+
+
+@main_bp.route('/edit_instructor/<int:instructor_id>', methods=['GET', 'POST'])
+@login_required
+def edit_instructor(instructor_id):
+    instructor = Instructor.query.get_or_404(instructor_id)
+    if request.method == 'POST':
+        instructor.name = request.form['name']
+        instructor.email = request.form.get('email')
+        db.session.commit()
+        flash(f"Instructor '{instructor.name}' updated.", 'success')
+        return redirect(url_for('main.settings', message=f"Instructor '{instructor.name}' updated.", type='success', active_tab='instructors'))
+
+    
+    return render_template('edit_item.html', item=instructor, item_type='Instructor')
+
+@main_bp.route('/delete_subject/<int:subject_id>', methods=['POST'])
+@login_required
+def delete_subject(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    db.session.delete(subject)
+    db.session.commit()
+    flash(f"Subject '{subject.name}' has been deleted.", 'danger')
+    return redirect(url_for('main.settings', message=f"Subject '{subject.name}' has been deleted.", type='danger', active_tab='financial'))
+
+
+@main_bp.route('/api/get_college_structure/<int:college_id>')
+@login_required
+def get_college_structure(college_id):
+    college = College.query.get(college_id)
+    if college:
+        return jsonify({'structure_type': college.structure_type})
+    else:
+        return jsonify({'error': 'College not found'}), 404
+
+
+
+@main_bp.route('/api/get_college_years/<int:college_id>')
+@login_required
+def get_college_years(college_id):
+    years = CollegeYear.query.filter_by(college_id=college_id).order_by(CollegeYear.year_number).all()
+    year_list = [{'id': year.id, 'year_number': year.year_number} for year in years]
+    return jsonify({'years': year_list})
+
+@main_bp.route('/api/get_terms/<int:college_id>/<int:year>')
+@login_required
+def get_terms(college_id, year):
+    terms = Term.query.filter_by(college_id=college_id, year=year).order_by(Term.name).all()
+    term_list = [{'id': term.id, 'name': term.name} for term in terms]
+    return jsonify({'terms': term_list})
+
+@main_bp.route('/api/get_modules/<int:college_id>/<int:year>')
+@login_required
+def get_modules(college_id, year):
+    modules = Module.query.filter_by(college_id=college_id, year=year).order_by(Module.name).all()
+    module_list = [{'id': module.id, 'name': module.name} for module in modules]
+    return jsonify({'modules': module_list})
+
+@main_bp.route('/api/get_subjects')
+@login_required
+def get_subjects():
+    # Get the filter criteria from the URL query parameters
+    college_id = request.args.get('college_id', type=int)
+    year = request.args.get('year', type=int)
+    term_id = request.args.get('term_id', type=int)
+    module_id = request.args.get('module_id', type=int)
+
+    # Start with a base query for all subjects
+    query = Subject.query
+
+    # Apply filters if they are provided
+    if college_id:
+        query = query.filter_by(college_id=college_id)
+    if year:
+        query = query.filter_by(year=year)
+    if term_id:
+        query = query.filter_by(term_id=term_id)
+    if module_id:
+        query = query.filter_by(module_id=module_id)
+
+    # Execute the final query
+    subjects = query.order_by(Subject.name).all()
+
+    # Convert the results into a list of dictionaries
+    subject_list = [{
+        'id': sub.id, 
+        'name': sub.name,
+        'course_price': sub.default_course_price,
+        'app_price': sub.default_application_price
+    } for sub in subjects]
+    
+    return jsonify({'subjects': subject_list})
+
+@main_bp.route('/get_colleges/<int:university_id>')
 @login_required
 def get_colleges(university_id):
     colleges = College.query.filter_by(university_id=university_id).order_by(College.name).all()
     college_list = [{'id': col.id, 'name': col.name} for col in colleges]
     return jsonify({'colleges': college_list})
 
-@app.route('/api/filter_customers')
+@main_bp.route('/api/filter_customers')
 @login_required
 def filter_customers():
     # Start with a query for all customers
@@ -1147,149 +1038,8 @@ def filter_customers():
         })
     
     return jsonify({'customers': customer_list})
-@app.route('/delete_customer/<int:customer_id>', methods=['POST'])
-@login_required
-def delete_customer(customer_id):
-    customer_to_delete = Customer.query.get_or_404(customer_id)
-    db.session.delete(customer_to_delete)
-    db.session.commit()
-    # We will add a flash message here later to confirm deletion
-    return redirect(url_for('view_customers', message='Customer has been deleted.', type='danger'))
-@app.route('/edit_customer/<int:customer_id>', methods=['GET', 'POST'])
-@login_required
-def edit_customer(customer_id):
-    customer_to_edit = Customer.query.get_or_404(customer_id)
-    
-    if request.method == 'POST':
-        # This is the logic to UPDATE the customer in the database
-        customer_to_edit.full_name = request.form['full_name']
-        customer_to_edit.email = request.form.get('email')
-        customer_to_edit.whatsapp_number = request.form.get('whatsapp_number')
-        customer_to_edit.year = request.form.get('year', type=int)
-        customer_to_edit.college_id = request.form['college_id']
-        db.session.commit()
-        # We'll add a flash message here later
-        return redirect(url_for('view_customers', message=f"Customer '{customer_to_edit.full_name}' was updated.", type='success'))
 
-    # This is the logic to DISPLAY the pre-filled form (GET request)
-    all_countries = Country.query.order_by(Country.name).all()
-    return render_template('edit_customer.html', customer=customer_to_edit, countries=all_countries)
-
-@app.route('/delete_country/<int:country_id>', methods=['POST'])
-@login_required
-def delete_country(country_id):
-    country_to_delete = Country.query.get_or_404(country_id)
-    
-    # This check prevents the app from crashing
-    if country_to_delete.universities:
-        message = f"Cannot delete '{country_to_delete.name}' because it has universities linked to it."
-        return redirect(url_for('settings', message=f"Country '{country_to_delete.name}' has been deleted.", type='danger', active_tab='academic'))
-
-        
-    db.session.delete(country_to_delete)
-    db.session.commit()
-    message = f"Country '{country_to_delete.name}' has been deleted."
-    return redirect(url_for('settings', message=message, type='success'))
-
-
-@app.route('/delete_university/<int:university_id>', methods=['POST'])
-@login_required
-def delete_university(university_id):
-    university_to_delete = University.query.get_or_404(university_id)
-    db.session.delete(university_to_delete)
-    db.session.commit()
-    return redirect(url_for('settings', message=f"University '{university_to_delete.name}' has been deleted.", type='danger', active_tab='academic'))
-
-
-@app.route('/delete_college/<int:college_id>', methods=['POST'])
-@login_required
-def delete_college(college_id):
-    college_to_delete = College.query.get_or_404(college_id)
-    db.session.delete(college_to_delete)
-    db.session.commit()
-    return redirect(url_for('settings', message=f"College '{college_to_delete.name}' has been deleted.", type='danger', active_tab='academic'))
-
-@app.route('/edit_country/<int:country_id>', methods=['GET', 'POST'])
-@login_required
-def edit_country(country_id):
-    country = Country.query.get_or_404(country_id)
-    if request.method == 'POST':
-        country.name = request.form['name']
-        db.session.commit()
-        return redirect(url_for('settings', message='Country updated.', type='success', active_tab='academic'))
-
-    return render_template('edit_item.html', item=country, item_type='Country')
-
-@app.route('/edit_university/<int:university_id>', methods=['GET', 'POST'])
-@login_required
-def edit_university(university_id):
-    university = University.query.get_or_404(university_id)
-    if request.method == 'POST':
-        university.name = request.form['name']
-        # THIS IS THE CRITICAL FIX: It now reads the country_id from the form
-        university.country_id = request.form['country_id'] 
-        db.session.commit()
-        # This now correctly passes the message to the URL for the chatbot
-        return redirect(url_for('settings', message='University updated.', type='success', active_tab='academic'))
-
-    
-    # This part for showing the form is also needed
-    all_countries = Country.query.order_by(Country.name).all()
-    return render_template('edit_item.html', item=university, item_type='University', all_countries=all_countries)
-
-
-# REPLACE the existing edit_college function with this one
-
-@app.route('/edit_college/<int:college_id>', methods=['GET', 'POST'])
-@login_required
-def edit_college(college_id):
-    college = College.query.get_or_404(college_id)
-    
-    if request.method == 'POST':
-        college.name = request.form['name']
-        college.university_id = request.form['university_id']
-        db.session.commit()
-        return redirect(url_for('settings', message='College updated.', type='success', active_tab='academic'))
-
-    
-    # This is the part that was missing the return statement
-    all_universities = University.query.order_by(University.name).all()
-    # The print statement is removed, and the essential return is here.
-    return render_template('edit_item.html', 
-                           item=college, 
-                           item_type='College', 
-                           all_universities=all_universities)
-
-
-@app.route('/delete_instructor/<int:instructor_id>', methods=['POST'])
-@login_required
-def delete_instructor(instructor_id):
-    instructor = Instructor.query.get_or_404(instructor_id)
-    # Optional: Add a check here to prevent deleting an instructor who is assigned to subjects
-    db.session.delete(instructor)
-    db.session.commit()
-    flash(f"Instructor '{instructor.name}' has been deleted.", 'danger')
-    return redirect(url_for('settings', message=f"Instructor '{instructor.name}' has been deleted.", type='danger', active_tab='instructors'))
-
-
-@app.route('/edit_instructor/<int:instructor_id>', methods=['GET', 'POST'])
-@login_required
-def edit_instructor(instructor_id):
-    instructor = Instructor.query.get_or_404(instructor_id)
-    if request.method == 'POST':
-        instructor.name = request.form['name']
-        instructor.email = request.form.get('email')
-        db.session.commit()
-        flash(f"Instructor '{instructor.name}' updated.", 'success')
-        return redirect(url_for('settings', message=f"Instructor '{instructor.name}' updated.", type='success', active_tab='instructors'))
-
-    
-    # For GET request, we re-use the generic edit_item.html template
-    return render_template('edit_item.html', item=instructor, item_type='Instructor')
-
-# In app.py, add this new route at the end of the file, before the main run block.
-
-@app.route('/api/segment_students', methods=['POST'])
+@main_bp.route('/api/segment_students', methods=['POST'])
 @login_required
 def segment_students():
     try:
@@ -1362,18 +1112,7 @@ def segment_students():
         print(f"Error in /api/segment_students: {e}")
         return jsonify({'error': 'An internal error occurred.'}), 500
 
-
-@app.route('/delete_subject/<int:subject_id>', methods=['POST'])
-@login_required
-def delete_subject(subject_id):
-    subject = Subject.query.get_or_404(subject_id)
-    db.session.delete(subject)
-    db.session.commit()
-    flash(f"Subject '{subject.name}' has been deleted.", 'danger')
-    return redirect(url_for('settings', message=f"Subject '{subject.name}' has been deleted.", type='danger', active_tab='financial'))
-
-
-@app.route('/edit_subject/<int:subject_id>', methods=['GET', 'POST'])
+@main_bp.route('/edit_subject/<int:subject_id>', methods=['GET', 'POST'])
 @login_required
 def edit_subject(subject_id):
     subject = Subject.query.get_or_404(subject_id)
@@ -1391,7 +1130,7 @@ def edit_subject(subject_id):
         subject.currency_id = request.form['currency_id']
         db.session.commit()
         flash(f"Subject '{subject.name}' updated.", 'success')
-        return redirect(url_for('settings', message=f"Subject '{subject.name}' updated.", type='success', active_tab='financial'))
+        return redirect(url_for('main.settings', message=f"Subject '{subject.name}' updated.", type='success', active_tab='financial'))
 
 
     # For GET request, we need to pass all the dropdown options to the template
@@ -1405,7 +1144,7 @@ def edit_subject(subject_id):
                            all_colleges=all_colleges,
                            all_instructors=all_instructors,
                            all_currencies=all_currencies)
-@app.route('/api/export_segment_csv')
+@main_bp.route('/api/export_segment_csv')
 @login_required
 def export_segment_csv():
     query = Customer.query.join(College).join(University).join(Country)
@@ -1470,123 +1209,3 @@ def export_segment_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=student_segment.csv"}
     )
-
-# ... at the very end of the file
-
-def add_initial_data():
-    # Check if data already exists to prevent duplicates
-    if Currency.query.first() is None:
-        print("Adding initial currency data...")
-        egp = Currency(code='EGP', symbol='E£')
-        db.session.add(egp)
-        db.session.commit()
-
-    if PaymentMethod.query.first() is None:
-        print("Adding initial payment method data...")
-        cash = PaymentMethod(name='Cash')
-        # --- THIS LINE IS CHANGED ---
-        visa = PaymentMethod(name='Visa') 
-        # --- THIS LINE IS CHANGED ---
-        transfer = PaymentMethod(name='Transfer')
-        by_app = PaymentMethod(name='(by app)')
-        # --- THIS LINE IS CHANGED ---
-        db.session.add_all([cash, visa, transfer, by_app])
-        db.session.commit()
-
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        # Check if user or email already exists
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists. Please choose a different one.', 'danger')
-            return redirect(url_for('signup'))
-        if User.query.filter_by(email=email).first():
-            flash('Email address already registered. Please use a different one.', 'danger')
-            return redirect(url_for('signup'))
-
-        # Create new user with a hashed password
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)
-        
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('Account created successfully! You can now sign in.', 'success')
-        return redirect(url_for('signin'))
-
-    return render_template('signup.html')
-
-
-@app.route('/signin', methods=['GET', 'POST'])
-def signin():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        remember = True if request.form.get('remember') else False
-
-        user = User.query.filter_by(username=username).first()
-
-        # Check if user exists and password is correct
-        if not user or not user.check_password(password):
-            flash('Invalid username or password. Please try again.', 'danger')
-            return redirect(url_for('signin'))
-
-        # Log the user in
-        login_user(user, remember=remember)
-        flash(f'Welcome back, {user.username}!', 'success')
-        
-        # Redirect to the dashboard after successful login
-        return redirect(url_for('index'))
-
-    return render_template('signin.html')
-
-
-@app.route('/signout')
-@login_required # Only a logged-in user can sign out
-def signout():
-    logout_user()
-    flash('You have been signed out.', 'info')
-    return redirect(url_for('signin'))
-
-
-@app.route('/profile', methods=['GET', 'POST'])
-@login_required # This page is protected
-def profile():
-    if request.method == 'POST':
-        # Logic to update user profile
-        current_user.username = request.form.get('username')
-        current_user.email = request.form.get('email')
-        
-        # Optional: Update password
-        password = request.form.get('password')
-        if password:
-            current_user.set_password(password)
-            
-        db.session.commit()
-        flash('Your profile has been updated successfully.', 'success')
-        return redirect(url_for('profile'))
-
-    return render_template('profile.html', user=current_user)
-
-# 6. Main entry point to run the app
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        
-        # === ADD THIS LINE TO RE-POPULATE THE DATA ===
-        add_initial_data()
-        # ============================================
-
-        # Optional: Create a default admin user if one doesn't exist
-        if not User.query.filter_by(username='admin').first():
-            print("Creating default admin user...")
-            admin_user = User(username='admin', email='admin@example.com')
-            admin_user.set_password('password') # CHANGE THIS in a real app!
-            db.session.add(admin_user)
-            db.session.commit()
-            print("Admin user created with username 'admin' and password 'password'")
-    app.run(debug=True)

@@ -95,7 +95,7 @@
                     <!-- Add Country -->
                     <div class="settings-section">
                         <div class="section-header"><h5><i class="tim-icons icon-world"></i> Add Country</h5></div>
-                        <form action="{{ url_for('add_country') }}" method="post" class="settings-form">
+                        <form action="{{ url_for('main.add_country') }}" method="post" class="settings-form">
                             <div class="row align-items-end">
                                 <div class="col-12 col-lg-8">
                                     <div class="form-group-enhanced">
@@ -117,7 +117,7 @@
                     <!-- Add University -->
                     <div class="settings-section">
                         <div class="section-header"><h5><i class="tim-icons icon-bank"></i> Add University</h5></div>
-                        <form action="{{ url_for('add_university') }}" method="post" class="settings-form">
+                        <form action="{{ url_for('main.add_university') }}" method="post" class="settings-form">
                             <div class="row align-items-end">
                                 <div class="col-12 col-lg-4">
                                     <div class="form-group-enhanced">
@@ -148,7 +148,7 @@
                     <!-- Add College -->
 <div class="settings-section">
     <div class="section-header"><h5><i class="tim-icons icon-istanbul"></i> Add College</h5></div>
-    <form action="{{ url_for('add_college') }}" method="post" class="settings-form">
+    <form action="{{ url_for('main.add_college') }}" method="post" class="settings-form">
         <div class="row align-items-end g-3">
            <div class="col-12 col-lg-4">
                 <div class="form-group-enhanced">
@@ -208,8 +208,8 @@
                                             <tr>
                                                 <td><strong>{{ country.name }}</strong></td>
                                                 <td class="text-right">
-                                                    <a href="{{ url_for('edit_country', country_id=country.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                                                    <form action="{{ url_for('delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                                    <a href="{{ url_for('main.edit_country', country_id=country.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                                                    <form action="{{ url_for('main.delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -225,8 +225,8 @@
                                             <tr>
                                                 <td><strong>{{ university.name }}</strong><span class="table-meta">{{ university.country.name }}</span></td>
                                                 <td class="text-right">
-                                                    <a href="{{ url_for('edit_university', university_id=university.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                                                    <form action="{{ url_for('delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                                    <a href="{{ url_for('main.edit_university', university_id=university.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                                                    <form action="{{ url_for('main.delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -253,8 +253,8 @@
                     <span class="table-meta">{{ college.university.name }}</span>
                 </td>
                 <td class="text-right">
-                    <a href="{{ url_for('edit_college', college_id=college.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                    <form action="{{ url_for('delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                    <a href="{{ url_for('main.edit_college', college_id=college.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                    <form action="{{ url_for('main.delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                 </td>
             </tr>
             {% endfor %}
@@ -271,7 +271,7 @@
                 <div class="tab-pane fade {% if active_tab == 'financial' %}show active{% endif %}" id="financial">
                     <div class="settings-section">
     <div class="section-header"><h5><i class="tim-icons icon-book-bookmark"></i> Add New Subject</h5></div>
-    <form action="{{ url_for('add_subject') }}" method="post" class="settings-form">
+    <form action="{{ url_for('main.add_subject') }}" method="post" class="settings-form">
         <div class="row">
             <div class="col-md-6"><div class="form-group-enhanced"><label>Subject Name</label><input type="text" name="subject_name" class="form-control-enhanced" placeholder="e.g., Anatomy 101" required></div></div>
             
@@ -329,8 +329,8 @@
                                         <td>{{ subject.college.name }}</td>
                                         <td>{{ "%.2f"|format(subject.default_course_price + subject.default_application_price) }} {{ subject.currency.symbol }}</td>
                                         <td class="text-right">
-                                            <a href="{{ url_for('edit_subject', subject_id=subject.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                                            <form action="{{ url_for('delete_subject', subject_id=subject.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                            <a href="{{ url_for('main.edit_subject', subject_id=subject.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                                            <form action="{{ url_for('main.delete_subject', subject_id=subject.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -349,7 +349,7 @@
                             <div class="settings-section">
                                 <div class="section-header"><h5><i class="tim-icons icon-puzzle-10"></i> Manage College Years</h5></div>
                                 <!-- Add College Year Form -->
-                                <form action="{{ url_for('add_college_year') }}" method="post" class="settings-form">
+                                <form action="{{ url_for('main.add_college_year') }}" method="post" class="settings-form">
                                     <div class="row align-items-end">
                                         <div class="col-12">
                                             <div class="form-group-enhanced">
@@ -389,7 +389,7 @@
                                                 <tr>
                                                     <td><strong>Year {{ year.year_number }}</strong></td>
                                                     <td class="text-right">
-                                                        <form action="{{ url_for('delete_college_year', year_id=year.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                                        <form action="{{ url_for('main.delete_college_year', year_id=year.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                                     </td>
                                                 </tr>
                                                 {% endfor %}
@@ -405,7 +405,7 @@
                             <div class="settings-section">
                                 <div class="section-header"><h5><i class="tim-icons icon-calendar-60"></i> Manage Terms</h5></div>
                                 <!-- Add Term Form -->
-                                <form action="{{ url_for('add_term') }}" method="post" class="settings-form">
+                                <form action="{{ url_for('main.add_term') }}" method="post" class="settings-form">
                                     <div class="row align-items-end">
                                         <div class="col-12">
                                             <div class="form-group-enhanced">
@@ -453,7 +453,7 @@
                                                 <span class="table-meta">{{ term.college.name }} - Year {{ term.year }}</span>
                                             </td>
                                             <td class="text-right">
-                                                <form action="{{ url_for('delete_term', term_id=term.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                                <form action="{{ url_for('main.delete_term', term_id=term.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -467,7 +467,7 @@
                             <div class="settings-section">
                                 <div class="section-header"><h5><i class="tim-icons icon-bullet-list-67"></i> Manage Modules</h5></div>
                                 <!-- Add Module Form -->
-                                <form action="{{ url_for('add_module') }}" method="post" class="settings-form">
+                                <form action="{{ url_for('main.add_module') }}" method="post" class="settings-form">
                                     <div class="row align-items-end">
                                         <div class="col-12">
                                             <div class="form-group-enhanced">
@@ -515,7 +515,7 @@
                                                 <span class="table-meta">{{ module.college.name }} - Year {{ module.year }}</span>
                                             </td>
                                             <td class="text-right">
-                                                <form action="{{ url_for('delete_module', module_id=module.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                                <form action="{{ url_for('main.delete_module', module_id=module.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -532,7 +532,7 @@
                 <div class="tab-pane fade {% if active_tab == 'instructors' %}show active{% endif %}" id="instructors">
                     <div class="settings-section">
                         <div class="section-header"><h5><i class="tim-icons icon-badge"></i> Add New Instructor</h5></div>
-                        <form action="{{ url_for('add_instructor') }}" method="post" class="settings-form">
+                        <form action="{{ url_for('main.add_instructor') }}" method="post" class="settings-form">
                             <div class="row">
                                 <div class="col-12 col-lg-5"><div class="form-group-enhanced"><label>Instructor Name</label><input type="text" name="instructor_name" class="form-control-enhanced" placeholder="e.g., Dr. Ahmed" required></div></div>
                                 <div class="col-md-4"><div class="form-group-enhanced"><label>Email (Optional)</label><input type="email" name="instructor_email" class="form-control-enhanced" placeholder="ahmed@example.com"></div></div>
@@ -549,8 +549,8 @@
                                 <tr>
                                     <td><strong>{{ instructor.name }}</strong><span class="table-meta">{{ instructor.email or 'No Email' }}</span></td>
                                     <td class="text-right">
-                                        <a href="{{ url_for('edit_instructor', instructor_id=instructor.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                                        <form action="{{ url_for('delete_instructor', instructor_id=instructor.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
+                                        <a href="{{ url_for('main.edit_instructor', instructor_id=instructor.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                                        <form action="{{ url_for('main.delete_instructor', instructor_id=instructor.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button></form>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -577,7 +577,7 @@
                                 <a href="{{ url_for('static', filename='assets/sample/sample_import.xlsx') }}" class="download-link"><i class="tim-icons icon-cloud-download-93"></i> Download sample template</a>
                             </p>
                         </div>
-                        <form action="{{ url_for('import_customers') }}" method="post" enctype="multipart/form-data" class="import-form">
+                        <form action="{{ url_for('main.import_customers') }}" method="post" enctype="multipart/form-data" class="import-form">
                             <div class="file-upload-container">
                                 <div class="file-upload-area">
                                     <input type="file" name="import_file" id="import_file" required>
@@ -639,7 +639,7 @@
                 yearSelect.empty().append('<option value="">Loading...</option>').trigger('change');
 
                 if (collegeId) {
-                    fetch(`/api/get_college_years/${collegeId}`)
+                    fetch(`{{ url_for('main.get_college_years', college_id=0) }}`.replace('0', collegeId))
                         .then(response => response.json())
                         .then(data => {
                             yearSelect.empty().append('<option value="">-- Select Year --</option>');
@@ -681,7 +681,7 @@
 
             if (collegeId) {
                 // Fetch the defined years for the selected college
-                fetch(`/api/get_college_years/${collegeId}`)
+                fetch(`{{ url_for('main.get_college_years', college_id=0) }}`.replace('0', collegeId))
                     .then(response => response.json())
                     .then(data => {
                         subjectYearSelect.empty().append('<option value="">-- Select Year --</option>');
@@ -709,12 +709,12 @@
 
             if (collegeId && year) {
                 // Fetch the college's structure type
-                fetch(`/api/get_college_structure/${collegeId}`)
+                fetch(`{{ url_for('main.get_college_structure', college_id=0) }}`.replace('0', collegeId))
                     .then(response => response.json())
                     .then(data => {
                         if (data.structure_type === 'term') {
                             // Fetch the terms for the selected college and year
-                            fetch(`/api/get_terms/${collegeId}/${year}`)
+                            fetch(`{{ url_for('main.get_terms', college_id=0, year=0) }}`.replace('0', collegeId).replace('0', year))
                                 .then(response => response.json())
                                 .then(termData => {
                                     termSelect.empty().append('<option value="">-- Select Term --</option>');
@@ -725,7 +725,7 @@
                                 });
                         } else if (data.structure_type === 'module') {
                             // Fetch the modules for the selected college and year
-                            fetch(`/api/get_modules/${collegeId}/${year}`)
+                            fetch(`{{ url_for('main.get_modules', college_id=0, year=0) }}`.replace('0', collegeId).replace('0', year))
                                 .then(response => response.json())
                                 .then(moduleData => {
                                     moduleSelect.empty().append('<option value="">-- Select Module --</option>');
@@ -775,8 +775,11 @@
 
         if (message) {
             showChatbotMessage(message, messageType);
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // Use history.replaceState to clean the URL without reloading
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?active_tab=' + urlParams.get('active_tab');
+            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
         }
     });
 </script>
 {% endblock javascripts %}
+

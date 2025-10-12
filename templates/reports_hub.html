@@ -67,7 +67,7 @@
                 <p>Filter application fee revenue by academic year, university, or college.</p>
                 
                 <div class="report-form-container">
-                    <form id="application-report-form" method="GET" action="{{ url_for('application_report') }}">
+                    <form id="application-report-form" method="GET" action="{{ url_for('main.application_report) }}">
                         
             
                         <!-- Filter by University -->
@@ -207,7 +207,7 @@
                 var $btn = $(this).find('button[type="submit"]');
                 $btn.html('<i class="tim-icons icon-refresh-01 spinning"></i> Generating...');
                 $btn.prop('disabled', true);
-                var reportUrl = "{{ url_for('instructor_report', instructor_id=0) }}".replace('0', instructorId);
+                var reportUrl = "{{ url_for('main.instructor_report', instructor_id=0) }}".replace('0', instructorId);
                 setTimeout(function() { window.location.href = reportUrl; }, 500);
             } else {
                 showNotification('Please select an instructor to generate a report', 'warning');

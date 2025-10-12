@@ -1,0 +1,84 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Admin Management{% endblock %}
+
+<!-- This block will set the page title in the header -->
+{% block page_title %}
+  Admin Management
+{% endblock %}
+
+<!-- This is the main content block -->
+{% block content %}
+<div class="content">
+  <div class="row">
+    <!-- Column for Adding a New User -->
+    <div class="col-md-5">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Add New Admin User</h5>
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('auth.add_user') }}" method="POST">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" class="form-control" name="username" required>
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" class="form-control" name="email" >
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" class="form-control" name="password" required>
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-fill btn-primary">Create User</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column for Listing Existing Users -->
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Existing Users</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table tablesorter">
+              <thead class="text-primary">
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in all_users %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td class="text-center">
+                    {% if user.id != current_user.id %}
+                    <form action="{{ url_for('auth.delete_user', user_id=user.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" style="display: inline;">
+                      <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="tim-icons icon-simple-remove"></i>
+                      </button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted">(Current User)</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
