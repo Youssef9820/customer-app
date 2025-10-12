@@ -33,24 +33,29 @@ def create_app():
     login_manager.init_app(app)
     bcrypt.init_app(app)
 
-    # Set the login view and the page to go to after login
     login_manager.login_view = 'auth.signin'
-    login_manager.login_next = 'main.index' 
+    login_manager.login_next = 'main.index'
 
     with app.app_context():
         # --- Import parts of our application ---
         from . import models
         from .auth import auth_bp
         from .main import main_bp
+        from .routes.dashboard import dashboard_bp
+        from .routes.reports import reports_bp
+        from .routes.imports import imports_bp
+        from .routes.settings import settings_bp  
 
         # --- Register Blueprints ---
         app.register_blueprint(auth_bp)
         app.register_blueprint(main_bp)
-        
-        # --- User loader function ---
+        app.register_blueprint(dashboard_bp)
+        app.register_blueprint(reports_bp)
+        app.register_blueprint(imports_bp)
+        app.register_blueprint(settings_bp)
+
         @login_manager.user_loader
         def load_user(user_id):
             return models.User.query.get(int(user_id))
 
-        # This is the final line of the function. It must be indented.
         return app

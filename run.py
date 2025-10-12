@@ -36,4 +36,5 @@ if __name__ == '__main__':
             db.session.commit()
             print("Admin user created.")
 
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
