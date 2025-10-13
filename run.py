@@ -32,7 +32,7 @@ if __name__ == '__main__':
         if not User.query.filter_by(username='admin').first():
             print("Creating default admin user...")
             user = User(username='admin', email='admin@example.com')
-            user.set_password('password')
+            user.set_password('Adm1n!Passw0rd')
             db.session.add(user)
             db.session.commit()
             print("Admin user created.")

@@ -1,7 +1,5 @@
-# app/main.py
-
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, abort
-from flask_login import login_required
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, abort, current_app
+from flask_login import login_required, current_user
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 import pandas as pd
@@ -12,6 +10,8 @@ from flask import Response
 # Import models and db instance from the main application package
 from .models import Customer, University, College, Country, Subject, Instructor, Term, Module, Payment, CommunicationLog, Currency, PaymentMethod, CollegeYear
 from . import db
+from .upload_utils import parse_import_file, UploadError
+
 
 # Create the blueprint
 main_bp = Blueprint('main', __name__)
@@ -213,83 +213,150 @@ def add_subject():
 def import_customers():
     if 'import_file' not in request.files:
         flash('No file part in the request.', 'danger')
-        return redirect(url_for('settings.import_settings', message=success_message, type='success', active_tab='import'))
-
+        current_app.logger.warning(
+            "Customer import rejected: user_id=%s reason=no file part",
+            getattr(current_user, 'id', 'anonymous'),
+        )
+        return render_template('settings/import.html', active_tab='import'), 400
 
     file = request.files['import_file']
 
-    if file.filename == '':
+    if not file or file.filename == '':
         flash('No file selected for uploading.', 'danger')
-        return redirect(url_for('settings.import_settings', active_tab='import'))
+        current_app.logger.warning(
+            "Customer import rejected: user_id=%s reason=empty filename",
+            getattr(current_user, 'id', 'anonymous'),
+        )
+        return render_template('settings/import.html', active_tab='import'), 400
 
-    if file:
-        try:
-            # Read the file using pandas
-            if file.filename.endswith('.csv'):
-                df = pd.read_csv(file)
-            elif file.filename.endswith('.xlsx'):
-                df = pd.read_excel(file)
-            else:
-                flash('Invalid file type. Please upload a .csv or .xlsx file.', 'danger')
-                return redirect(url_for('settings.financial_settings', active_tab='import'))
+    try:
+        parsed_upload = parse_import_file(file)
+    except UploadError as err:
+        current_app.logger.warning(
+            "Customer import rejected: user_id=%s filename=%s reason=%s",
+            getattr(current_user, 'id', 'anonymous'),
+            err.filename or file.filename,
+            err.log_message,
+        )
+        flash(err.user_message, 'danger')
+        return render_template('settings/import.html', active_tab='import'), err.status_code
 
-            new_customers = []
-            errors = []
-            
-            # Pre-load all colleges with their relationships to avoid many small queries
-            all_colleges = College.query.options(
-                 joinedload(College.university).joinedload(University.country)
-            ).all()
-               
-            college_map = {
-                (c.university.country.name.lower(), c.university.name.lower(), c.name.lower()): c.id
-                for c in all_colleges
-            }
+    df = parsed_upload.dataframe
+    sanitized_filename = parsed_upload.filename
+    file_size = parsed_upload.file_size
+    row_count = parsed_upload.row_count
 
-            for index, row in df.iterrows():
-                # Normalize names from the file for matching
-                country_name = str(row['country']).lower().strip()
-                university_name = str(row['university']).lower().strip()
-                college_name = str(row['college']).lower().strip()
+    if df.empty:
+        flash('Uploaded file does not contain any rows to import.', 'warning')
+        current_app.logger.info(
+            "Customer import empty: user_id=%s filename=%s size=%s bytes",
+            getattr(current_user, 'id', 'anonymous'),
+            sanitized_filename,
+            file_size,
+        )
+        return render_template('settings/import.html', active_tab='import'), 400
 
-                # Find the college_id from our pre-built map
-                college_id = college_map.get((country_name, university_name, college_name))
+    def normalise_text(value):
+        if value is None:
+            return ''
+        if isinstance(value, str):
+            return value.strip()
+        if pd.isna(value):
+            return ''
+        return str(value).strip()
 
-                if not college_id:
-                    errors.append(f"Row {index + 2}: Could not find College '{row['college']}' in University '{row['university']}' / Country '{row['country']}'.")
-                    continue
+    def optional_value(value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            text = value.strip()
+            return text or None
+        if pd.isna(value):
+            return None
+        return value
 
-                # Create the new customer object
-                customer = Customer(
-                    full_name=row['full_name'],
-                    email=row.get('email'),
-                    whatsapp_number=row.get('whatsapp_number'),
-                    year=row.get('year'),
-                    college_id=college_id
-                )
-                new_customers.append(customer)
+    new_customers = []
+    errors = []
 
-            if errors:
-                for error in errors:
-                    flash(error, 'danger')
-                if not new_customers: # If all rows had errors
-                    return redirect(url_for('settings.import_settings', active_tab='import'))
+    all_colleges = College.query.options(
+        joinedload(College.university).joinedload(University.country)
+    ).all()
 
-            # Add all valid new customers to the database
-            db.session.bulk_save_objects(new_customers)
-            db.session.commit()
-            
-            success_message = f"Successfully imported {len(new_customers)} customers."
-            if errors:
-                 success_message += f" Skipped {len(errors)} rows with errors."
+    college_map = {
+        (c.university.country.name.lower(), c.university.name.lower(), c.name.lower()): c.id
+        for c in all_colleges
+    }
+    for index, row in df.iterrows():
+        country_name = normalise_text(row.get('country')).lower()
+        university_name = normalise_text(row.get('university')).lower()
+        college_name = normalise_text(row.get('college')).lower()
+        full_name = normalise_text(row.get('full_name'))
 
-            flash(success_message, 'success')
+        if not full_name:
+            errors.append(f"Row {index + 2}: Missing required full_name value.")
+            continue
 
-        except Exception as e:
-            db.session.rollback()
-            flash(f"An error occurred: {e}", 'danger')
+        college_id = college_map.get((country_name, university_name, college_name))
 
+        if not college_id:
+            errors.append(
+                f"Row {index + 2}: Could not find College '{row.get('college')}' in University '{row.get('university')}' / Country '{row.get('country')}'."
+            )
+            continue
+
+        customer = Customer(
+            full_name=full_name,
+            email=optional_value(row.get('email')),
+            whatsapp_number=optional_value(row.get('whatsapp_number')),
+            year=optional_value(row.get('year')),
+            college_id=college_id
+        )
+        new_customers.append(customer)
+
+    if not new_customers:
+        for error in errors:
+            flash(error, 'danger')
+        current_app.logger.warning(
+            "Customer import rejected: user_id=%s filename=%s reason=no valid rows",
+            getattr(current_user, 'id', 'anonymous'),
+            sanitized_filename,
+        )
+        return render_template('settings/import.html', active_tab='import'), 400
+
+    if errors:
+        for error in errors:
+            flash(error, 'warning')
+
+    try:
+        db.session.bulk_save_objects(new_customers)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Customer import failed during database commit: user_id=%s filename=%s",
+            getattr(current_user, 'id', 'anonymous'),
+            sanitized_filename,
+        )
+        flash('An unexpected error occurred while importing customers.', 'danger')
+        return render_template('settings/import.html', active_tab='import'), 500
+
+    success_message = f"Successfully imported {len(new_customers)} customers."
+    if errors:
+        success_message += f" Skipped {len(errors)} rows with validation errors."
+
+    flash(success_message, 'success')
+    current_app.logger.info(
+        "Customer import succeeded: user_id=%s filename=%s size=%s bytes rows=%s inserted=%s skipped=%s",
+        getattr(current_user, 'id', 'anonymous'),
+        sanitized_filename,
+        file_size,
+        row_count,
+        len(new_customers),
+        len(errors),
+    )
     return redirect(url_for('settings.import_settings', active_tab='import'))
+
+
 
 
 @main_bp.route('/record_payment', methods=['GET'])

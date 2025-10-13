@@ -3,7 +3,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import User  # We will create this models.py file next
-from . import db, bcrypt # We will set up this import structure
+from . import db, bcrypt, limiter # We will set up this import structure
+from .utils.password_validation import validate_password_strength
 
 # 1. Create the Blueprint
 # The first argument, 'auth', is the name of the blueprint.
@@ -14,6 +15,8 @@ auth_bp = Blueprint('auth', __name__)
 # 2. Define the Routes for this Blueprint
 
 @auth_bp.route('/signin', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
+
 def signin():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -27,7 +30,6 @@ def signin():
             return redirect(url_for('auth.signin'))
 
         login_user(user, remember=remember)
-        flash(f'Welcome back, {user.username}!', 'success')
         
         # Redirect to the main index page after successful login
         return redirect(url_for('settings.academic_settings'))
@@ -39,7 +41,6 @@ def signin():
 @login_required
 def signout():
     logout_user()
-    flash('You have been signed out.', 'info')
     return redirect(url_for('auth.signin'))
 
 
@@ -53,7 +54,16 @@ def profile():
         
         password = request.form.get('password')
         if password:
-            current_user.set_password(password)
+            message = validate_password_strength(password)
+            if message:
+                flash(message, 'danger')
+                return redirect(url_for('auth.profile'))
+            try:
+                current_user.set_password(password)
+            except ValueError as exc:
+                flash(str(exc), 'danger')
+                return redirect(url_for('auth.profile'))
+
             
         db.session.commit()
         flash('Your profile has been updated successfully.', 'success')
@@ -85,7 +95,17 @@ def add_user():
         return redirect(url_for('auth.admins'))
 
     new_user = User(username=username, email=email)
-    new_user.set_password(password)
+    message = validate_password_strength(password)
+    if message:
+        flash(message, 'danger')
+        return redirect(url_for('auth.admins'))
+
+    try:
+        new_user.set_password(password)
+    except ValueError as exc:
+        flash(str(exc), 'danger')
+        return redirect(url_for('auth.admins'))
+
     
     db.session.add(new_user)
     db.session.commit()

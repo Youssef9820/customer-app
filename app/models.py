@@ -1,6 +1,7 @@
 from flask_login import UserMixin
 from datetime import datetime, UTC
 from . import db, bcrypt
+from .utils.password_validation import validate_password_strength
 
 
 class User(UserMixin, db.Model):
@@ -11,6 +12,10 @@ class User(UserMixin, db.Model):
 
     def set_password(self, password):
         """Create a hashed password using bcrypt."""
+        message = validate_password_strength(password)
+        if message:
+            raise ValueError(message)
+        
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):

@@ -8,6 +8,10 @@ from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+
 
 load_dotenv()
 
@@ -15,6 +19,9 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 bcrypt = Bcrypt()
 csrf = CSRFProtect()
+# Throttle inbound requests globally so brute-force bursts are capped across the app.
+limiter = Limiter(get_remote_address, default_limits=["200 per day", "50 per hour"])
+
 
 def create_app():
     """Construct the core application."""
@@ -56,6 +63,9 @@ def create_app():
     login_manager.init_app(app)
     bcrypt.init_app(app)
     csrf.init_app(app)
+        # Enforce rate limiting after CSRF is ready to slow down credential stuffing attempts.
+    limiter.init_app(app)
+
 
 
     login_manager.login_view = 'auth.signin'
@@ -105,10 +115,11 @@ def create_app():
                 app.logger.info("Skipping admin seeding in production environment.")
             else:
                 admin = User(username='admin', email='admin@example.com')
-                admin.set_password('password')
+                admin.set_password('Adm1n!Passw0rd')
                 db.session.add(admin)
                 db.session.commit()
                 app.logger.info("✅ Default admin user created.")
+
 
 
         return app
