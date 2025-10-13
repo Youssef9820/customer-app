@@ -60,7 +60,8 @@ def add_country():
         db.session.commit()
         flash(f"Country '{name}' added successfully.", 'success')
     # This redirect will now trigger the chatbot
-    return redirect(url_for('settings.academic.settings', message=f"Country '{name}' added.", type='success', active_tab='academic'))
+    return redirect(url_for('settings.academic_settings', message=f"Country '{name}' added.", type='success', active_tab='academic'))
+
 
 
 @main_bp.route('/add_university', methods=['POST'])
@@ -114,7 +115,7 @@ def add_college_year():
             flash(f"Year {year_number} already exists for this college.", 'warning')
     else:
         flash("Both college and year number are required.", 'danger')
-    return redirect(url_for('settings.academic_settings', active_tab='structure'))
+    return redirect(url_for('settings.structure_settings', active_tab='structure'))
 
 @main_bp.route('/add_instructor', methods=['POST'])
 @login_required
@@ -889,12 +890,6 @@ def get_subjects():
     
     return jsonify({'subjects': subject_list})
 
-@main_bp.route('/get_colleges/<int:university_id>')
-@login_required
-def get_colleges(university_id):
-    colleges = College.query.filter_by(university_id=university_id).order_by(College.name).all()
-    college_list = [{'id': col.id, 'name': col.name} for col in colleges]
-    return jsonify({'colleges': college_list})
 
 @main_bp.route('/api/filter_customers')
 @login_required
@@ -1114,3 +1109,60 @@ def export_segment_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=student_segment.csv"}
     )
+
+# DELETE TERM
+@main_bp.route('/delete_term/<int:term_id>', methods=['POST'])
+@login_required
+def delete_term(term_id):
+    from app.models import Term
+    term = Term.query.get_or_404(term_id)
+    db.session.delete(term)
+    db.session.commit()
+    return redirect(url_for('settings.structure_settings', message=f"Term '{term.name}' deleted successfully.", type='success', active_tab='structure'))
+
+
+# DELETE MODULE
+@main_bp.route('/delete_module/<int:module_id>', methods=['POST'])
+@login_required
+def delete_module(module_id):
+    from app.models import Module
+    module = Module.query.get_or_404(module_id)
+    db.session.delete(module)
+    db.session.commit()
+    return redirect(url_for('settings.structure_settings', message=f"Module '{module.name}' deleted successfully.", type='success', active_tab='structure'))
+
+
+# API ENDPOINT: Get Universities by Country
+@main_bp.route('/api_get_universities/<int:country_id>', methods=['GET'])
+@login_required
+def api_get_universities(country_id):
+    from app.models import University
+    universities = University.query.filter_by(country_id=country_id).all()
+    return {
+        "universities": [
+            {"id": u.id, "name": u.name} for u in universities
+        ]
+    }
+
+
+@main_bp.route('/api_get_colleges/<int:university_id>', methods=['GET'])
+@login_required
+def api_get_colleges(university_id):
+    from app.models import College
+    colleges = College.query.filter_by(university_id=university_id).all()
+    return {
+        "colleges": [
+            {"id": c.id, "name": c.name} for c in colleges
+        ]
+    }
+
+@main_bp.route('/api_get_years/<int:college_id>', methods=['GET'])
+@login_required
+def api_get_years(college_id):
+    from app.models import CollegeYear
+    years = CollegeYear.query.filter_by(college_id=college_id).all()
+    return {
+        "years": [
+            {"id": y.id, "year_number": y.year_number} for y in years
+        ]
+    }

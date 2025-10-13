@@ -1,0 +1,161 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Data Import {% endblock %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+    .import-section {
+        text-align: center;
+        padding: 30px;
+    }
+    .import-icon i {
+        font-size: 40px;
+        color: #2dce89;
+        margin-bottom: 10px;
+    }
+    .columns-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .column-badge {
+        background-color: #2dce89;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+    .file-upload-container {
+        margin-top: 25px;
+    }
+    .file-upload-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #9a9a9a;
+        border-radius: 10px;
+        padding: 30px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .file-upload-label:hover {
+        border-color: #2dce89;
+        background-color: rgba(45, 206, 137, 0.05);
+    }
+    .upload-icon i {
+        font-size: 30px;
+        color: #2dce89;
+    }
+    .upload-title {
+        font-weight: 600;
+        color: #2dce89;
+    }
+    .upload-subtitle {
+        font-size: 13px;
+        color: #9a9a9a;
+    }
+    .btn-upload {
+        margin-top: 20px;
+        background-color: #2dce89;
+        color: white;
+        font-weight: 600;
+        padding: 10px 25px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-upload:hover {
+        background-color: #24b976;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+
+    <!-- Header -->
+    <div class="settings-header">
+        <div class="settings-title">
+            <div class="title-icon">
+                <i class="tim-icons icon-cloud-upload-94"></i>
+            </div>
+            <div>
+                <h2>Data Import</h2>
+                <p>Upload Excel (.xlsx) or CSV (.csv) files to bulk import customer data</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card settings-card">
+        <div class="card-body">
+            <div class="import-section">
+
+                <!-- Header -->
+                <div class="import-header">
+                    <div class="import-icon"><i class="tim-icons icon-cloud-upload-94"></i></div>
+                    <h5>Import Customers from File</h5>
+                    <p>Upload Excel (.xlsx) or CSV (.csv) files to bulk import customer data</p>
+                </div>
+
+                <!-- Instructions -->
+                <div class="import-instructions">
+                    <h6><i class="tim-icons icon-alert-circle-exc"></i> Required Columns:</h6>
+                    <div class="columns-list">
+                        <span class="column-badge">full_name</span>
+                        <span class="column-badge">email</span>
+                        <span class="column-badge">whatsapp_number</span>
+                        <span class="column-badge">year</span>
+                        <span class="column-badge">country</span>
+                        <span class="column-badge">university</span>
+                        <span class="column-badge">college</span>
+                    </div>
+
+                    <p class="mt-3">
+                        <i class="tim-icons icon-bulb-63"></i>
+                        The system will automatically match country, university, and college names to existing records.
+                        <a href="{{ url_for('static', filename='assets/sample/sample_import.xlsx') }}" class="download-link">
+                            <i class="tim-icons icon-cloud-download-93"></i> Download sample template
+                        </a>
+                    </p>
+                </div>
+
+                <!-- Upload Form -->
+                <form action="{{ url_for('main.import_customers') }}" method="post" enctype="multipart/form-data" class="import-form">
+                    <div class="file-upload-container">
+                        <div class="file-upload-area">
+                            <input type="file" name="import_file" id="import_file" required hidden>
+                            <label for="import_file" class="file-upload-label">
+                                <div class="upload-icon"><i class="tim-icons icon-upload"></i></div>
+                                <div class="upload-text">
+                                    <span class="upload-title">Choose File</span>
+                                    <span class="upload-subtitle" id="file-chosen">No file selected</span>
+                                </div>
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-upload">
+                            <i class="tim-icons icon-check-2"></i> Upload and Import
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+$(document).ready(function(){
+    $('#import_file').on('change', function(){
+        const fileName = this.files[0] ? this.files[0].name : 'No file selected';
+        $('#file-chosen').text(fileName);
+    });
+});
+</script>
+{% endblock javascripts %}

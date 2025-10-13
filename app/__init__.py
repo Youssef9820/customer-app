@@ -53,9 +53,33 @@ def create_app():
         app.register_blueprint(reports_bp)
         app.register_blueprint(imports_bp)
         app.register_blueprint(settings_bp)
-
+        
         @login_manager.user_loader
         def load_user(user_id):
             return models.User.query.get(int(user_id))
 
+        from .models import User, Currency, PaymentMethod
+        db.create_all()
+
+        if not Currency.query.first():
+            db.session.add(Currency(code='EGP', symbol='E£'))
+            db.session.commit()
+
+        if not PaymentMethod.query.first():
+            db.session.add_all([
+                PaymentMethod(name='Cash'),
+                PaymentMethod(name='Visa'),
+                PaymentMethod(name='Transfer'),
+                PaymentMethod(name='(by app)')
+            ])
+            db.session.commit()
+
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', email='admin@example.com')
+            admin.set_password('password')
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Default admin user created.")
+
         return app
+

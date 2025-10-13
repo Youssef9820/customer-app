@@ -24,7 +24,7 @@
                         {% endif %}
                     {% endwith %}
                     
-                    <form method="POST" action="{{ url_for('signin') }}" novalidate>
+                    <form method="POST" action="{{ url_for('auth.signin') }}" novalidate>
                         <div class="form-group mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>

@@ -1,0 +1,287 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Academic Settings {% endblock %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+    .settings-section .form-group-enhanced {
+        margin-bottom: 1rem;
+    }
+    .structure-options {
+        display: flex;
+        gap: 1.5rem;
+        padding-top: 25px;
+    }
+    .custom-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+    .custom-checkbox input {
+        margin-right: 0.5rem;
+        width: 18px;
+        height: 18px;
+    }
+</style>
+{% endblock stylesheets %}
+
+
+{% block content %}
+<div class="content">
+
+    <div class="settings-header">
+        <div class="settings-title">
+            <div class="title-icon">
+                <i class="tim-icons icon-settings-gear-63"></i>
+            </div>
+            <div>
+                <h2>Academic Settings</h2>
+                <p>Manage academic data such as countries, universities, and colleges</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card settings-card">
+        <div class="card-body">
+
+            <!-- Add Country -->
+            <div class="settings-section">
+                <div class="section-header"><h5><i class="tim-icons icon-world"></i> Add Country</h5></div>
+                <form action="{{ url_for('main.add_country') }}" method="post" class="settings-form">
+                    <div class="row align-items-end">
+                        <div class="col-12 col-lg-8">
+                            <div class="form-group-enhanced">
+                                <label>Country Name</label>
+                                <input type="text" name="country_name" class="form-control-enhanced" placeholder="e.g., Egypt" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group-enhanced">
+                                <button type="submit" class="btn btn-settings-primary w-100">
+                                    <i class="tim-icons icon-simple-add"></i> Add Country
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Add University -->
+            <div class="settings-section">
+                <div class="section-header"><h5><i class="tim-icons icon-bank"></i> Add University</h5></div>
+                <form action="{{ url_for('main.add_university') }}" method="post" class="settings-form">
+                    <div class="row align-items-end">
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group-enhanced">
+                                <label>Select Country</label>
+                                <select name="country_id" class="form-control-enhanced select2-dropdown" required>
+                                    <option value="">-- Select --</option>
+                                    {% for country in countries %}
+                                        <option value="{{ country.id }}">{{ country.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-5">
+                            <div class="form-group-enhanced">
+                                <label>University Name</label>
+                                <input type="text" name="university_name" class="form-control-enhanced" placeholder="e.g., Cairo University" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group-enhanced">
+                                <button type="submit" class="btn btn-settings-primary w-100">
+                                    <i class="tim-icons icon-simple-add"></i> Add University
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Add College -->
+            <div class="settings-section">
+                <div class="section-header"><h5><i class="tim-icons icon-istanbul"></i> Add College</h5></div>
+                <form action="{{ url_for('main.add_college') }}" method="post" class="settings-form">
+                    <div class="row align-items-end g-3">
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group-enhanced">
+                                <label>Select University</label>
+                                <select name="university_id" class="form-control-enhanced select2-dropdown" required>
+                                    <option value="">-- Select --</option>
+                                    {% for university in universities %}
+                                        <option value="{{ university.id }}">{{ university.name }} ({{ university.country.name }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group-enhanced">
+                                <label>College Name</label>
+                                <input type="text" name="college_name" class="form-control-enhanced" placeholder="e.g., Faculty of Medicine" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group-enhanced structure-options">
+                                <label class="custom-radio">
+                                    <input type="radio" name="structure_type" value="term" checked> Terms
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="structure_type" value="module"> Modules
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-2">
+                            <div class="form-group-enhanced">
+                                <button type="submit" class="btn btn-settings-primary w-100">
+                                    <i class="tim-icons icon-simple-add"></i> Add College
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Manage Existing Academic Data -->
+            <div class="text-center mt-5">
+                <button class="btn btn-manage-toggle" type="button" data-toggle="collapse" data-target="#manageAcademic">
+                    <i class="tim-icons icon-bullet-list-67"></i> Manage Existing Academic Data
+                </button>
+            </div>
+
+            <div class="collapse" id="manageAcademic">
+                <div class="manage-section">
+                    <div class="accordion settings-accordion" id="academicAccordion">
+
+                        <!-- Countries -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <button class="accordion-btn" type="button" data-toggle="collapse" data-target="#collapseCountries">
+                                    <span><i class="tim-icons icon-world"></i> Manage Countries</span>
+                                    <i class="tim-icons icon-minimal-down"></i>
+                                </button>
+                            </div>
+                            <div id="collapseCountries" class="collapse show" data-parent="#academicAccordion">
+                                <div class="accordion-content">
+                                    <div class="table-responsive">
+                                        <table class="table settings-table">
+                                            <tbody>
+                                                {% for country in countries %}
+                                                <tr>
+                                                    <td><strong>{{ country.name }}</strong></td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('main.edit_country', country_id=country.id) }}" class="btn btn-action btn-edit">
+                                                            <i class="tim-icons icon-pencil"></i> Edit
+                                                        </a>
+                                                        <form action="{{ url_for('main.delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <button type="submit" class="btn btn-action btn-delete">
+                                                                <i class="tim-icons icon-trash-simple"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Universities -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <button class="accordion-btn collapsed" type="button" data-toggle="collapse" data-target="#collapseUniversities">
+                                    <span><i class="tim-icons icon-bank"></i> Manage Universities</span>
+                                    <i class="tim-icons icon-minimal-down"></i>
+                                </button>
+                            </div>
+                            <div id="collapseUniversities" class="collapse" data-parent="#academicAccordion">
+                                <div class="accordion-content">
+                                    <div class="table-responsive">
+                                        <table class="table settings-table">
+                                            <tbody>
+                                                {% for university in universities %}
+                                                <tr>
+                                                    <td><strong>{{ university.name }}</strong><span class="table-meta">{{ university.country.name }}</span></td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('main.edit_university', university_id=university.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                                                        <form action="{{ url_for('main.delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colleges -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <button class="accordion-btn collapsed" type="button" data-toggle="collapse" data-target="#collapseColleges">
+                                    <span><i class="tim-icons icon-istanbul"></i> Manage Colleges</span>
+                                    <i class="tim-icons icon-minimal-down"></i>
+                                </button>
+                            </div>
+                            <div id="collapseColleges" class="collapse" data-parent="#academicAccordion">
+                                <div class="accordion-content">
+                                    <div class="table-responsive">
+                                        <table class="table settings-table">
+                                            <tbody>
+                                                {% for college in colleges %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ college.name }}</strong>
+                                                        {% if college.structure_type == 'term' %}
+                                                            <span class="badge badge-info ml-2">Term-based</span>
+                                                        {% elif college.structure_type == 'module' %}
+                                                            <span class="badge badge-success ml-2">Module-based</span>
+                                                        {% endif %}
+                                                        <span class="table-meta">{{ college.university.name }}</span>
+                                                    </td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('main.edit_college', college_id=college.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
+                                                        <form action="{{ url_for('main.delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    // تأكد إن كل dropdown من نوع select2-dropdown بيتحول لـ select2
+    $('.select2-dropdown').each(function() {
+        var $this = $(this);
+        if (!$this.data('select2')) {
+            $this.select2({
+                theme: "bootstrap4",
+                width: '100%'
+            });
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

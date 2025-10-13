@@ -4,6 +4,25 @@
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
+<style>
+    .select2-container--bootstrap4 .select2-selection {
+    background-color: #27293d !important;
+    color: #fff !important;
+}
+.select2-container--default .select2-selection--single {
+    background-color: #27293d !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+.select2-dropdown {
+    background-color: #1e1e2f !important;
+    color: #fff !important;
+}
+.select2-results__option--highlighted {
+    background-color: #5e72e4 !important;
+    color: #fff !important;
+}
+</style>
 
 {% endblock stylesheets %}
 
@@ -67,9 +86,7 @@
                 <p>Filter application fee revenue by academic year, university, or college.</p>
                 
                 <div class="report-form-container">
-                    <form id="application-report-form" method="GET" action="{{ url_for('main.application_report) }}">
-                        
-            
+                   <form id="application-report-form" method="GET" action="{{ url_for('main.application_report') }}">            
                         <!-- Filter by University -->
                         <div class="form-group">
                             <label for="university_filter" class="form-label-enhanced"><i class="tim-icons icon-bank"></i> Filter by University (Optional)</label>
@@ -164,68 +181,12 @@
 {% endblock content %}
 
 {% block javascripts %}
+{{ super() }}
 <script>
-    $(document).ready(function() {
-        // Initialize Select2 for Instructor dropdown
-        $('#instructor-select').select2({
-            placeholder: "🔍 Search by name or email...",
-            allowClear: true,
-            theme: "default",
-            width: '100%'
-        });
-
-        // ===================================================================
-        // === THIS IS THE NEW JAVASCRIPT TO FIX THE DROPDOWNS ===
-        // ===================================================================
-        $('#year_filter').select2({
-            placeholder: "Select a Year",
-            allowClear: true,
-            theme: "default",
-            width: '100%'
-        });
-        $('#university_filter').select2({
-            placeholder: "Search for a University",
-            allowClear: true,
-            theme: "default",
-            width: '100%'
-        });
-        $('#college_filter').select2({
-            placeholder: "Search for a College",
-            allowClear: true,
-            theme: "default",
-            width: '100%'
-        });
-        // ===================================================================
-        // =================== END OF THE NEW JAVASCRIPT =====================
-        // ===================================================================
-
-        // Handle Instructor form submission
-        $('#instructor-report-form').on('submit', function(e) {
-            e.preventDefault();
-            var instructorId = $('#instructor-select').val();
-            if (instructorId) {
-                var $btn = $(this).find('button[type="submit"]');
-                $btn.html('<i class="tim-icons icon-refresh-01 spinning"></i> Generating...');
-                $btn.prop('disabled', true);
-                var reportUrl = "{{ url_for('main.instructor_report', instructor_id=0) }}".replace('0', instructorId);
-                setTimeout(function() { window.location.href = reportUrl; }, 500);
-            } else {
-                showNotification('Please select an instructor to generate a report', 'warning');
-            }
-        });
-
-        // Add spinning animation style
-        var style = document.createElement('style');
-        style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spinning { animation: spin 1s linear infinite; display: inline-block; }`;
-        document.head.appendChild(style);
-
-        // Notification function
-        function showNotification(message, type) {
-            var color = type === 'warning' ? '#fb6340' : '#2dce89';
-            var notification = $('<div>').css({ position: 'fixed', top: '20px', right: '20px', background: 'linear-gradient(135deg, ' + color + ' 0%, ' + color + 'dd 100%)', color: '#fff', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 9999, fontSize: '15px', fontWeight: '500', opacity: 0, transform: 'translateY(-20px)', transition: 'all 0.3s ease' }).html('<i class="tim-icons icon-bell-55"></i> ' + message).appendTo('body');
-            setTimeout(function() { notification.css({ opacity: 1, transform: 'translateY(0)' }); }, 100);
-            setTimeout(function() { notification.css({ opacity: 0, transform: 'translateY(-20px)' }); setTimeout(function() { notification.remove(); }, 300); }, 3000);
-        }
-    });
+    window.reportsUrls = {
+        instructorReport: "{{ url_for('main.instructor_report', instructor_id=0) }}"
+    };
 </script>
+<script src="{{ url_for('static', filename='assets/js/reports_hub.js')}}"></script>
+
 {% endblock javascripts %}

@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Instructors Settings {% endblock %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+    .settings-section .form-group-enhanced {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+
+    <!-- Header -->
+    <div class="settings-header">
+        <div class="settings-title">
+            <div class="title-icon">
+                <i class="tim-icons icon-badge"></i>
+            </div>
+            <div>
+                <h2>Instructors Settings</h2>
+                <p>Manage instructors and their contact information</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card settings-card">
+        <div class="card-body">
+
+            <!-- Add Instructor -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h5><i class="tim-icons icon-badge"></i> Add New Instructor</h5>
+                </div>
+                <form action="{{ url_for('main.add_instructor') }}" method="post" class="settings-form">
+                    <div class="row">
+                        <div class="col-12 col-lg-5">
+                            <div class="form-group-enhanced">
+                                <label>Instructor Name</label>
+                                <input type="text" name="instructor_name" class="form-control-enhanced" placeholder="e.g., Dr. Ahmed" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-enhanced">
+                                <label>Email (Optional)</label>
+                                <input type="email" name="instructor_email" class="form-control-enhanced" placeholder="ahmed@example.com">
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-settings-primary w-100">
+                                <i class="tim-icons icon-simple-add"></i> Add Instructor
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Manage Existing Instructors -->
+            <div class="text-center mt-5">
+                <button class="btn btn-manage-toggle" type="button" data-toggle="collapse" data-target="#manageInstructors">
+                    <i class="tim-icons icon-bullet-list-67"></i> Manage Existing Instructors
+                </button>
+            </div>
+
+            <div class="collapse" id="manageInstructors">
+                <div class="manage-section">
+                    <div class="accordion settings-accordion" id="instructorAccordion">
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <button class="accordion-btn" type="button" data-toggle="collapse" data-target="#collapseInstructors">
+                                    <span><i class="tim-icons icon-badge"></i> Manage Instructors</span>
+                                    <i class="tim-icons icon-minimal-down"></i>
+                                </button>
+                            </div>
+                            <div id="collapseInstructors" class="collapse show" data-parent="#instructorAccordion">
+                                <div class="accordion-content">
+                                    <div class="table-responsive">
+                                        <table class="table settings-table">
+                                            <tbody>
+                                                {% for instructor in instructors %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ instructor.name }}</strong>
+                                                        <span class="table-meta">{{ instructor.email or 'No Email' }}</span>
+                                                    </td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('main.edit_instructor', instructor_id=instructor.id) }}" class="btn btn-action btn-edit">
+                                                            <i class="tim-icons icon-pencil"></i> Edit
+                                                        </a>
+                                                        <form action="{{ url_for('main.delete_instructor', instructor_id=instructor.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <button type="submit" class="btn btn-action btn-delete">
+                                                                <i class="tim-icons icon-trash-simple"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    $('.accordion-btn').on('click', function() {
+        $(this).find('.icon-minimal-down').toggleClass('rotated');
+    });
+});
+</script>
+{% endblock javascripts %}

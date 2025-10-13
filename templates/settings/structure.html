@@ -1,0 +1,288 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Structure Settings {% endblock %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+    .settings-section .form-group-enhanced {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+
+    <!-- Header -->
+    <div class="settings-header">
+        <div class="settings-title">
+            <div class="title-icon">
+                <i class="tim-icons icon-vector"></i>
+            </div>
+            <div>
+                <h2>Structure Settings</h2>
+                <p>Manage college years, terms, and modules</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card settings-card">
+        <div class="card-body">
+            <div class="row">
+
+                <!-- College Years -->
+                <div class="col-md-4">
+                    <div class="settings-section">
+                        <div class="section-header"><h5><i class="tim-icons icon-puzzle-10"></i> Manage College Years</h5></div>
+
+                        <form action="{{ url_for('main.add_college_year') }}" method="post" class="settings-form">
+                            <div class="row align-items-end">
+                                <div class="col-12">
+                                    <div class="form-group-enhanced">
+                                        <label>Select College</label>
+                                        <select name="college_id" class="form-control-enhanced select2-dropdown" required>
+                                            <option value="">-- Select a College --</option>
+                                            {% for college in colleges %}
+                                                <option value="{{ college.id }}">{{ college.name }} ({{ college.university.name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-7">
+                                    <div class="form-group-enhanced">
+                                        <label>Year Number</label>
+                                        <input type="number" name="year_number" class="form-control-enhanced" placeholder="e.g., 1" required>
+                                    </div>
+                                </div>
+                                <div class="col-5">
+                                    <div class="form-group-enhanced">
+                                        <button type="submit" class="btn btn-settings-primary w-100">
+                                            <i class="tim-icons icon-simple-add"></i> Add Year
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Manage Existing College Years -->
+                        <div class="manage-section mt-4">
+                            <div class="table-responsive">
+                                <table class="table settings-table"><tbody>
+                                    {% for college in colleges %}
+                                        {% if college.defined_years.all() %}
+                                            <tr><td colspan="2" class="table-group-header">{{ college.name }}</td></tr>
+                                            {% for year in college.defined_years.order_by('year_number') %}
+                                            <tr>
+                                                <td><strong>Year {{ year.year_number }}</strong></td>
+                                                <td class="text-right">
+                                                    <form action="{{ url_for('main.delete_college_year', year_id=year.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                        <button type="submit" class="btn btn-action btn-delete">
+                                                            <i class="tim-icons icon-trash-simple"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms -->
+                <div class="col-md-4">
+                    <div class="settings-section">
+                        <div class="section-header"><h5><i class="tim-icons icon-calendar-60"></i> Manage Terms</h5></div>
+
+                        <form action="{{ url_for('main.add_term') }}" method="post" class="settings-form">
+                            <div class="row align-items-end">
+                                <div class="col-12">
+                                    <div class="form-group-enhanced">
+                                        <label>Select College (Term-based)</label>
+                                        <select id="term-college-select" name="college_id" class="form-control-enhanced select2-dropdown" required>
+                                            <option value="">-- Select a College --</option>
+                                            {% for college in colleges if college.structure_type == 'term' %}
+                                                <option value="{{ college.id }}">{{ college.name }} ({{ college.university.name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-group-enhanced">
+                                        <label>For Year</label>
+                                        <select id="term-year-select" name="year" class="form-control-enhanced select2-dropdown" required>
+                                            <option value="">-- Select College First --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-8">
+                                    <div class="form-group-enhanced">
+                                        <label>New Term Name</label>
+                                        <input type="text" name="term_name" class="form-control-enhanced" placeholder="e.g., Term 1" required>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group-enhanced">
+                                        <button type="submit" class="btn btn-settings-primary w-100">
+                                            <i class="tim-icons icon-simple-add"></i> Add Term
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Manage Existing Terms -->
+                        <div class="manage-section mt-4">
+                            <div class="table-responsive">
+                                <table class="table settings-table"><tbody>
+                                    {% for term in all_terms %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ term.name }}</strong>
+                                            <span class="table-meta">{{ term.college.name }} - Year {{ term.year }}</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <form action="{{ url_for('main.delete_term', term_id=term.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                <button type="submit" class="btn btn-action btn-delete">
+                                                    <i class="tim-icons icon-trash-simple"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modules -->
+                <div class="col-md-4">
+                    <div class="settings-section">
+                        <div class="section-header"><h5><i class="tim-icons icon-bullet-list-67"></i> Manage Modules</h5></div>
+
+                        <form action="{{ url_for('main.add_module') }}" method="post" class="settings-form">
+                            <div class="row align-items-end">
+                                <div class="col-12">
+                                    <div class="form-group-enhanced">
+                                        <label>Select College (Module-based)</label>
+                                        <select id="module-college-select" name="college_id" class="form-control-enhanced select2-dropdown" required>
+                                            <option value="">-- Select a College --</option>
+                                            {% for college in colleges if college.structure_type == 'module' %}
+                                                <option value="{{ college.id }}">{{ college.name }} ({{ college.university.name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-group-enhanced">
+                                        <label>For Year</label>
+                                        <select id="module-year-select" name="year" class="form-control-enhanced select2-dropdown" required>
+                                            <option value="">-- Select College First --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-8">
+                                    <div class="form-group-enhanced">
+                                        <label>New Module Name</label>
+                                        <input type="text" name="module_name" class="form-control-enhanced" placeholder="e.g., Cardiovascular" required>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group-enhanced">
+                                        <button type="submit" class="btn btn-settings-primary w-100">
+                                            <i class="tim-icons icon-simple-add"></i> Add Module
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Manage Existing Modules -->
+                        <div class="manage-section mt-4">
+                            <div class="table-responsive">
+                                <table class="table settings-table"><tbody>
+                                    {% for module in all_modules %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ module.name }}</strong>
+                                            <span class="table-meta">{{ module.college.name }} - Year {{ module.year }}</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <form action="{{ url_for('main.delete_module', module_id=module.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                <button type="submit" class="btn btn-action btn-delete">
+                                                    <i class="tim-icons icon-trash-simple"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+
+    // Enable Select2
+    $('.select2-dropdown').each(function() {
+        var $this = $(this);
+        if (!$this.data('select2')) {
+            $this.select2({
+                theme: "bootstrap4",
+                width: '100%'
+            });
+        }
+    });
+
+    // Load Years dynamically for each structure
+    function setupYearDropdown(collegeSelectId, yearSelectId) {
+        const collegeSelect = $(collegeSelectId);
+        const yearSelect = $(yearSelectId);
+
+        collegeSelect.on('change', function() {
+            const collegeId = $(this).val();
+            yearSelect.empty().append('<option value="">Loading...</option>').trigger('change');
+
+            if (collegeId) {
+                fetch(`{{ url_for('main.get_college_years', college_id=0) }}`.replace('0', collegeId))
+                    .then(response => response.json())
+                    .then(data => {
+                        yearSelect.empty().append('<option value="">-- Select Year --</option>');
+                        data.years.forEach(year => {
+                            yearSelect.append(new Option(`Year ${year.year_number}`, year.year_number));
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching college years:', error);
+                        yearSelect.empty().append('<option value="">Error loading years</option>');
+                    });
+            } else {
+                yearSelect.empty().append('<option value="">-- Select College First --</option>');
+            }
+        });
+    }
+
+    setupYearDropdown('#term-college-select', '#term-year-select');
+    setupYearDropdown('#module-college-select', '#module-year-select');
+});
+</script>
+{% endblock javascripts %}

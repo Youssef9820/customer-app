@@ -51,13 +51,13 @@
                 </div>
                 <div class="form-group-enhanced">
                     <label for="university-filter">University</label>
-                    <select id="university-filter" class="form-control-enhanced" style="width: 100%;" disabled>
+                    <select id="university-filter" class="form-control-enhanced" style="width: 100%;" >
                         <option value="">-- All Universities --</option>
                     </select>
                 </div>
                 <div class="form-group-enhanced">
                     <label for="college-filter">College</label>
-                    <select id="college-filter" class="form-control-enhanced" style="width: 100%;" disabled>
+                    <select id="college-filter" class="form-control-enhanced" style="width: 100%;">
                         <option value="">-- All Colleges --</option>
                     </select>
                 </div>
@@ -71,7 +71,7 @@
                 <!-- The Year dropdown is now dynamic -->
                 <div class="form-group-enhanced">
                     <label for="year-filter">Year</label>
-                    <select id="year-filter" class="form-control-enhanced" style="width: 100%;" disabled>
+                    <select id="year-filter" class="form-control-enhanced" style="width: 100%;">
                         <option value="">-- Select College First --</option>
                     </select>
                 </div>
@@ -91,7 +91,7 @@
                 <!-- The Subject dropdown is now dynamic -->
                 <div class="form-group-enhanced">
                     <label for="subject-filter">Subject</label>
-                    <select id="subject-filter" class="form-control-enhanced" style="width: 100%;" disabled>
+                    <select id="subject-filter" class="form-control-enhanced" style="width: 100%;">
                         <option value="">-- Select Filters Above --</option>
                     </select>
                 </div>
@@ -199,8 +199,8 @@ $(document).ready(function() {
     // --- URL DEFINITIONS ---
     // Using hardcoded paths for reliability in JavaScript
     const urls = {
-        getUniversities: '/get-universities-by-country/', // Note the trailing slash
-        getColleges: '/get-colleges-by-university/',
+        getUniversities: '/api_get_universities/',
+        getColleges: '/api_get_colleges/',
         getCollegeYears: '/get-college-years/',
         getCollegeStructure: '/get-college-structure/',
         getTerms: '/get-terms/',
@@ -212,57 +212,61 @@ $(document).ready(function() {
     };
 
     countrySelect.on('change', function() {
-        const countryId = $(this).val();
-        universitySelect.val(null).trigger('change').prop('disabled', true);
-        if (countryId) {
-            $.getJSON(urls.getUniversities + countryId, function(data) {
-                universitySelect.empty().append('<option value="">-- All Universities --</option>');
-                $.each(data.universities, function(key, entry) {
-                    universitySelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
-                });
-                universitySelect.prop('disabled', false);
-            });
-        }
-    });
+    const countryId = $(this).val();
+    universitySelect.val(null).trigger('change');
 
-    universitySelect.on('change', function() {
-        const universityId = $(this).val();
-        collegeSelect.val(null).trigger('change').prop('disabled', true);
-        if (universityId) {
-            $.getJSON(urls.getColleges + universityId, function(data) {
-                collegeSelect.empty().append('<option value="">-- All Colleges --</option>');
-                $.each(data.colleges, function(key, entry) {
-                    collegeSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
-                });
-                collegeSelect.prop('disabled', false);
-            });
-        }
-    });
+    // ✅ التحقق: لو مفيش دولة مختارة، نوقف
+    if (!countryId) return;
 
-    collegeSelect.on('change', function() {
-        const collegeId = $(this).val();
-        yearSelect.val(null).trigger('change').prop('disabled', true);
-        termWrapper.hide();
-        moduleWrapper.hide();
-        subjectSelect.val(null).trigger('change').prop('disabled', true);
-
-        if (collegeId) {
-            $.getJSON(urls.getCollegeYears + collegeId, function(data) {
-                yearSelect.empty().append('<option value="">-- All Years --</option>');
-                $.each(data.years, function(key, entry) {
-                    yearSelect.append($('<option></option>').attr('value', entry.year_number).text(`Year ${entry.year_number}`));
-                });
-                yearSelect.prop('disabled', false);
-            });
-        }
+    $.getJSON(urls.getUniversities + countryId, function(data) {
+        universitySelect.empty().append('<option value="">-- All Universities --</option>');
+        $.each(data.universities, function(key, entry) {
+            universitySelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
+        });
     });
+});
+
+
+  universitySelect.on('change', function() {
+    const universityId = $(this).val();
+    collegeSelect.val(null).trigger('change');
+
+    // ✅ التحقق
+    if (!universityId) return;
+
+    $.getJSON(urls.getColleges + universityId, function(data) {
+        collegeSelect.empty().append('<option value="">-- All Colleges --</option>');
+        $.each(data.colleges, function(key, entry) {
+            collegeSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
+        });
+    });
+});
+
+
+collegeSelect.on('change', function() {
+    const collegeId = $(this).val();
+    yearSelect.val(null).trigger('change');
+    moduleWrapper.hide();
+    subjectSelect.val(null).trigger('change');
+
+    // ✅ التحقق
+    if (!collegeId) return;
+
+    $.getJSON(urls.getCollegeYears + collegeId, function(data) {
+        yearSelect.empty().append('<option value="">-- All Years --</option>');
+        $.each(data.years, function(key, entry) {
+            yearSelect.append($('<option></option>').attr('value', entry.year_number).text(`Year ${entry.year_number}`));
+        });
+    });
+});
+
 
     function updateAcademicFilters() {
         const collegeId = collegeSelect.val();
         const year = yearSelect.val();
         termWrapper.hide();
         moduleWrapper.hide();
-        subjectSelect.val(null).trigger('change').prop('disabled', true);
+        subjectSelect.val(null).trigger('change');
 
         if (collegeId && year) {
             $.getJSON(urls.getCollegeStructure + collegeId, function(data) {
@@ -288,27 +292,27 @@ $(document).ready(function() {
         updateSubjectFilter();
     }
 
-    function updateSubjectFilter() {
-        const collegeId = collegeSelect.val();
-        const year = yearSelect.val();
-        const termId = termSelect.val();
-        const moduleId = moduleSelect.val();
-        subjectSelect.val(null).trigger('change').prop('disabled', true);
+function updateSubjectFilter() {
+    const collegeId = collegeSelect.val();
+    const year = yearSelect.val();
+    const termId = termSelect.val();
+    const moduleId = moduleSelect.val();
 
-        if (collegeId && year) {
-            let params = new URLSearchParams({ college_id: collegeId, year: year });
-            if (termId) params.append('term_id', termId);
-            if (moduleId) params.append('module_id', moduleId);
-            
-            $.getJSON(`${urls.getSubjects}?${params.toString()}`, function(data) {
-                subjectSelect.empty().append('<option value="">-- All Subjects --</option>');
-                $.each(data.subjects, function(key, entry) {
-                    subjectSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
-                });
-                subjectSelect.prop('disabled', false);
-            });
-        }
-    }
+    // ✅ التحقق
+    if (!collegeId || !year) return;
+
+    let params = new URLSearchParams({ college_id: collegeId, year: year });
+    if (termId) params.append('term_id', termId);
+    if (moduleId) params.append('module_id', moduleId);
+
+    $.getJSON(`${urls.getSubjects}?${params.toString()}`, function(data) {
+        subjectSelect.empty().append('<option value="">-- All Subjects --</option>');
+        $.each(data.subjects, function(key, entry) {
+            subjectSelect.append($('<option></option>').attr('value', entry.id).text(entry.name));
+        });
+    });
+}
+
 
     yearSelect.on('change', updateAcademicFilters);
     termSelect.on('change', updateSubjectFilter);

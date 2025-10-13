@@ -1,0 +1,276 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Financial Settings {% endblock %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+    .settings-section .form-group-enhanced {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+
+    <!-- Header -->
+    <div class="settings-header">
+        <div class="settings-title">
+            <div class="title-icon">
+                <i class="tim-icons icon-money-coins"></i>
+            </div>
+            <div>
+                <h2>Financial Settings</h2>
+                <p>Manage subjects, pricing, and currencies</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card settings-card">
+        <div class="card-body">
+
+            <!-- Add New Subject -->
+            <div class="settings-section">
+                <div class="section-header"><h5><i class="tim-icons icon-book-bookmark"></i> Add New Subject</h5></div>
+                <form action="{{ url_for('main.add_subject') }}" method="post" class="settings-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-enhanced">
+                                <label>Subject Name</label>
+                                <input type="text" name="subject_name" class="form-control-enhanced" placeholder="e.g., Anatomy 101" required>
+                            </div>
+                        </div>
+
+                        <!-- Year Dropdown -->
+                        <div class="col-md-2">
+                            <div class="form-group-enhanced">
+                                <label>Year</label>
+                                <select id="subject-year-select" name="year" class="form-control-enhanced select2-dropdown" required>
+                                    <option value="">-- Select College First --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Term / Module dynamic select -->
+                        <div class="col-md-4">
+                            <div id="term-select-wrapper" style="display: none;">
+                                <div class="form-group-enhanced">
+                                    <label>Term</label>
+                                    <select id="term-select" name="term_id" class="form-control-enhanced select2-dropdown"></select>
+                                </div>
+                            </div>
+                            <div id="module-select-wrapper" style="display: none;">
+                                <div class="form-group-enhanced">
+                                    <label>Module</label>
+                                    <select id="module-select" name="module_id" class="form-control-enhanced select2-dropdown"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prices -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group-enhanced">
+                                <label>Course Price</label>
+                                <input type="number" step="0.01" name="course_price" class="form-control-enhanced" value="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-enhanced">
+                                <label>Application Price</label>
+                                <input type="number" step="0.01" name="app_price" class="form-control-enhanced" value="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-enhanced">
+                                <label>Currency</label>
+                                <select name="currency_id" class="form-control-enhanced select2-dropdown" required>
+                                    {% for currency in currencies %}
+                                        <option value="{{ currency.id }}">{{ currency.code }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- College + Instructor -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-enhanced">
+                                <label>College</label>
+                                <select id="subject-college-select" name="college_id" class="form-control-enhanced select2-dropdown" required>
+                                    <option value="">-- Select College --</option>
+                                    {% for college in colleges %}
+                                        <option value="{{ college.id }}">{{ college.name }} ({{ college.university.name }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-enhanced">
+                                <label>Instructor</label>
+                                <select name="instructor_id" class="form-control-enhanced select2-dropdown">
+                                    <option value="">-- None --</option>
+                                    {% for instructor in instructors %}
+                                        <option value="{{ instructor.id }}">{{ instructor.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <button type="submit" class="btn btn-settings-primary">
+                                <i class="tim-icons icon-simple-add"></i> Add Subject
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Manage Existing Subjects -->
+            <div class="text-center mt-5">
+                <button class="btn btn-manage-toggle" type="button" data-toggle="collapse" data-target="#manageSubjects">
+                    <i class="tim-icons icon-bullet-list-67"></i> Manage Existing Subjects
+                </button>
+            </div>
+
+            <div class="collapse" id="manageSubjects">
+                <div class="manage-section">
+                    <div class="accordion settings-accordion" id="financialAccordion">
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <button class="accordion-btn" type="button" data-toggle="collapse" data-target="#collapseSubjects">
+                                    <span><i class="tim-icons icon-book-bookmark"></i> Manage Subjects</span>
+                                    <i class="tim-icons icon-minimal-down"></i>
+                                </button>
+                            </div>
+                            <div id="collapseSubjects" class="collapse show" data-parent="#financialAccordion">
+                                <div class="accordion-content">
+                                    <div class="table-responsive">
+                                        <table class="table settings-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Subject</th>
+                                                    <th>College</th>
+                                                    <th>Price</th>
+                                                    <th class="text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for subject in subjects %}
+                                                <tr>
+                                                    <td><strong>{{ subject.name }}</strong><span class="table-meta">Year {{ subject.year }}</span></td>
+                                                    <td>{{ subject.college.name }}</td>
+                                                    <td>{{ "%.2f"|format(subject.default_course_price + subject.default_application_price) }} {{ subject.currency.symbol }}</td>
+                                                    <td class="text-right">
+                                                        <a href="{{ url_for('main.edit_subject', subject_id=subject.id) }}" class="btn btn-action btn-edit">
+                                                            <i class="tim-icons icon-pencil"></i> Edit
+                                                        </a>
+                                                        <form action="{{ url_for('main.delete_subject', subject_id=subject.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+
+    // Initialize Select2
+    $('.select2-dropdown').each(function() {
+        var $this = $(this);
+        if (!$this.data('select2')) {
+            $this.select2({
+                theme: "bootstrap4",
+                width: '100%'
+            });
+        }
+    });
+
+    // Dynamic Year Dropdown + Term/Module Logic
+    const subjectCollegeSelect = $('#subject-college-select');
+    const subjectYearSelect = $('#subject-year-select');
+    const termWrapper = $('#term-select-wrapper');
+    const moduleWrapper = $('#module-select-wrapper');
+    const termSelect = $('#term-select');
+    const moduleSelect = $('#module-select');
+
+    subjectCollegeSelect.on('change', function() {
+        const collegeId = $(this).val();
+        subjectYearSelect.empty().append('<option value="">Loading...</option>');
+        termWrapper.hide();
+        moduleWrapper.hide();
+
+        if (collegeId) {
+            fetch(`{{ url_for('main.get_college_years', college_id=0) }}`.replace('0', collegeId))
+                .then(response => response.json())
+                .then(data => {
+                    subjectYearSelect.empty().append('<option value="">-- Select Year --</option>');
+                    data.years.forEach(year => {
+                        subjectYearSelect.append(new Option(`Year ${year.year_number}`, year.year_number));
+                    });
+                });
+        } else {
+            subjectYearSelect.empty().append('<option value="">-- Select College First --</option>');
+        }
+    });
+
+    subjectYearSelect.on('change', function() {
+        const collegeId = subjectCollegeSelect.val();
+        const year = $(this).val();
+
+        termWrapper.hide();
+        moduleWrapper.hide();
+
+        if (collegeId && year) {
+            fetch(`{{ url_for('main.get_college_structure', college_id=0) }}`.replace('0', collegeId))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.structure_type === 'term') {
+                        fetch(`{{ url_for('main.get_terms', college_id=0, year=0) }}`.replace('0', collegeId).replace('0', year))
+                            .then(response => response.json())
+                            .then(termData => {
+                                termSelect.empty().append('<option value="">-- Select Term --</option>');
+                                termData.terms.forEach(term => {
+                                    termSelect.append(new Option(term.name, term.id));
+                                });
+                                termWrapper.show();
+                            });
+                    } else if (data.structure_type === 'module') {
+                        fetch(`{{ url_for('main.get_modules', college_id=0, year=0) }}`.replace('0', collegeId).replace('0', year))
+                            .then(response => response.json())
+                            .then(moduleData => {
+                                moduleSelect.empty().append('<option value="">-- Select Module --</option>');
+                                moduleData.modules.forEach(module => {
+                                    moduleSelect.append(new Option(module.name, module.id));
+                                });
+                                moduleWrapper.show();
+                            });
+                    }
+                });
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

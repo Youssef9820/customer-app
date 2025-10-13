@@ -30,7 +30,7 @@ def signin():
         flash(f'Welcome back, {user.username}!', 'success')
         
         # Redirect to the main index page after successful login
-        return redirect(url_for('main.index')) # Note: We'll create a 'main' blueprint too
+        return redirect(url_for('settings.academic_settings'))
 
     return render_template('signin.html')
 

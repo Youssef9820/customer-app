@@ -227,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- DROPDOWN LOGIC (FOR MANUAL FILLING) ---
-    // This part needs to use jQuery to work with Select2
     $('#country').on('change', function() {
         const countryId = this.value;
         const $universitySelect = $('#university');
@@ -237,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $collegeSelect.empty().append('<option value="">-- Select a College --</option>').trigger('change');
 
         if (countryId) {
-            fetch(`/get_universities/${countryId}`)
+            fetch(`/api_get_universities/${countryId}`)
                 .then(response => response.json())
                 .then(data => {
                     data.universities.forEach(uni => {
@@ -245,7 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         $universitySelect.append(option);
                     });
                     $universitySelect.trigger('change');
-                });
+                })
+                .catch(err => console.error('Error fetching universities:', err));
         }
     });
 
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $collegeSelect.empty().append('<option value="">-- Select a College --</option>').trigger('change');
 
         if (universityId) {
-            fetch(`/get_colleges/${universityId}`)
+            fetch(`/api_get_colleges/${universityId}`)
                 .then(response => response.json())
                 .then(data => {
                     data.colleges.forEach(col => {
@@ -264,7 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         $collegeSelect.append(option);
                     });
                     $collegeSelect.trigger('change');
-                });
+                })
+                .catch(err => console.error('Error fetching colleges:', err));
         }
     });
 });

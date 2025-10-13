@@ -19,7 +19,7 @@
             <button class="btn btn-export" onclick="window.print()">
                 <i class="tim-icons icon-cloud-download-93"></i> Export PDF
             </button>
-            <a href="{{ url_for('reports_hub') }}" class="btn btn-back">
+            <a href="{{ url_for('main.reports_hub') }}" class="btn btn-back">
                 <i class="tim-icons icon-minimal-left"></i> Back to Reports
             </a>
         </div>
@@ -181,7 +181,7 @@
                                                                                                                                 <tbody>
                                                                                                                                     {% for payment in subject_data.payments %}
                                                                                                                                     <tr>
-                                                                                                                                        <td><a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
+                                                                                                                                        <td><a href="{{ url_for('main.customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
                                                                                                                                         <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
                                                                                                                                         <td class="text-right">{{ "%.2f"|format(payment.course_price_paid) }} EGP</td>
                                                                                                                                     </tr>
@@ -230,7 +230,7 @@
                                                                                                                                 <tbody>
                                                                                                                                     {% for payment in subject_data.payments %}
                                                                                                                                     <tr>
-                                                                                                                                        <td><a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
+                                                                                                                                        <td><a href="{{ url_for('main.customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
                                                                                                                                         <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
                                                                                                                                         <td class="text-right">{{ "%.2f"|format(payment.course_price_paid) }} EGP</td>
                                                                                                                                     </tr>
@@ -330,7 +330,7 @@
                                                         <tbody>
                                                             {% for payment in item.payments %}
                                                             <tr>
-                                                                <td><a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
+                                                                <td><a href="{{ url_for('main.customer_profile', customer_id=payment.customer.id) }}">{{ payment.customer.full_name }}</a></td>
                                                                 <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
                                                                 <td class="text-right">{{ "%.2f"|format(payment.course_price_paid) }} EGP</td>
                                                             </tr>

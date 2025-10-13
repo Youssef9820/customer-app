@@ -13,7 +13,7 @@
                 </div>
                 <div class="card-body">
                     <!-- The action now points to the edit route, passing the customer's ID -->
-                    <form action="{{ url_for('edit_customer', customer_id=customer.id) }}" method="post">
+                    <<a href="{{ url_for('main.edit_customer', customer_id=customer.id) }}" class="btn btn-primary btn-round btn-lg">Edit Profile</a>
                         <div class="row">
                             <div class="col-md-4 pr-md-1">
                                 <div class="form-group">
@@ -76,7 +76,7 @@
                         <div class="card-footer">
                             <!-- Change button text -->
                             <button type="submit" class="btn btn-fill btn-primary">Save Changes</button>
-                            <a href="{{ url_for('view_customers') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ url_for('main.view_customers') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -84,82 +84,79 @@
         </div>
     </div>
 </div>
-
 {% endblock content %}
 
 {% block javascripts %}
 {{ super() }}
 <script>
-// This script is more complex because it needs to load and pre-select the dropdowns
-document.addEventListener('DOMContentLoaded', function() {
-    const countrySelect = document.getElementById('country');
-    const universitySelect = document.getElementById('university');
-    const collegeSelect = document.getElementById('college');
+document.addEventListener('DOMContentLoaded', function () {
+  // Select2 (اختياري)
+  if (window.$ && $.fn.select2) {
+    $('#country').select2({ theme: 'bootstrap4' });
+    $('#university').select2({ theme: 'bootstrap4' });
+    $('#college').select2({ theme: 'bootstrap4' });
+  }
 
-    // The IDs of the customer's current selections, passed from the template
-    const initialUniversityId = "{{ customer.college.university_id }}";
-    const initialCollegeId = "{{ customer.college_id }}";
+  const countrySelect = document.getElementById('country');
+  const universitySelect = document.getElementById('university');
+  const collegeSelect = document.getElementById('college');
 
-    function updateSelect(selectElement, options, placeholder, selectedId) {
-        selectElement.innerHTML = '';
-        const placeholderOption = document.createElement('option');
-        placeholderOption.value = '';
-        placeholderOption.textContent = placeholder;
-        selectElement.appendChild(placeholderOption);
-        options.forEach(option => {
-            const newOption = document.createElement('option');
-            newOption.value = option.id;
-            newOption.textContent = option.name;
-            if (option.id == selectedId) {
-                newOption.selected = true;
-            }
-            selectElement.appendChild(newOption);
-        });
-    }
+  const initialUniversityId = "{{ customer.college.university_id }}";
+  const initialCollegeId = "{{ customer.college_id }}";
 
-    function loadUniversities(countryId, selectedUniversityId) {
-        if (countryId) {
-            fetch(`/get_universities/${countryId}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateSelect(universitySelect, data.universities, '-- Select a University --', selectedUniversityId);
-                    // If a university was pre-selected, trigger the loading of colleges
-                    if (selectedUniversityId) {
-                        loadColleges(selectedUniversityId, initialCollegeId);
-                    }
-                });
-        }
-    }
+  function updateSelect(selectElement, options, placeholder, selectedId) {
+    selectElement.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = placeholder;
+    selectElement.appendChild(ph);
 
-    function loadColleges(universityId, selectedCollegeId) {
-        if (universityId) {
-            fetch(`/get_colleges/${universityId}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateSelect(collegeSelect, data.colleges, '-- Select a College --', selectedCollegeId);
-                });
-        }
-    }
-
-    // --- Event Listeners ---
-    countrySelect.addEventListener('change', function() {
-        const countryId = this.value;
-        updateSelect(universitySelect, [], '-- Select a University --');
-        updateSelect(collegeSelect, [], '-- Select a College --');
-        loadUniversities(countryId, null); // No pre-selection needed when user changes country
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = o.name;
+      if (String(o.id) === String(selectedId)) opt.selected = true;
+      selectElement.appendChild(opt);
     });
 
-    universitySelect.addEventListener('change', function() {
-        const universityId = this.value;
-        updateSelect(collegeSelect, [], '-- Select a College --');
-        loadColleges(universityId, null); // No pre-selection needed when user changes university
-    });
+    // أعِد تهيئة Select2 لو شغال
+    if (window.$ && $.fn.select2) $(selectElement).trigger('change.select2');
+  }
 
-    // --- Initial Load ---
-    // Trigger the initial loading process when the page is ready
-    if (countrySelect.value) {
-        loadUniversities(countrySelect.value, initialUniversityId);
-    }
+  function loadUniversities(countryId, selectedUniversityId) {
+    if (!countryId) return;
+    fetch(`/api_get_universities/${countryId}`)
+      .then(r => r.json())
+      .then(data => {
+        updateSelect(universitySelect, data.universities, '-- Select a University --', selectedUniversityId);
+        if (selectedUniversityId) loadColleges(selectedUniversityId, initialCollegeId);
+      });
+  }
+
+  function loadColleges(universityId, selectedCollegeId) {
+    if (!universityId) return;
+    fetch(`/api_get_colleges/${universityId}`)
+      .then(r => r.json())
+      .then(data => {
+        updateSelect(collegeSelect, data.colleges, '-- Select a College --', selectedCollegeId);
+      });
+  }
+
+  countrySelect.addEventListener('change', () => {
+    updateSelect(universitySelect, [], '-- Select a University --', null);
+    updateSelect(collegeSelect, [], '-- Select a College --', null);
+    loadUniversities(countrySelect.value, null);
+  });
+
+  universitySelect.addEventListener('change', () => {
+    updateSelect(collegeSelect, [], '-- Select a College --', null);
+    loadColleges(universitySelect.value, null);
+  });
+
+  // Initial load بناءً على الدولة المحددة مسبقًا
+  if (countrySelect.value) {
+    loadUniversities(countrySelect.value, initialUniversityId);
+  }
 });
 </script>
 {% endblock javascripts %}

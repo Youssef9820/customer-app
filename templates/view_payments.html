@@ -28,7 +28,7 @@
                                 {% for payment in payments %}
                                 <tr>
                                     <td>
-                                        <a href="{{ url_for('customer_profile', customer_id=payment.customer.id) }}">
+                                        <a href="{{ url_for('main.customer_profile', customer_id=payment.customer.id) }}">
                                             {{ payment.customer.full_name }}
                                         </a>
                                     </td>
