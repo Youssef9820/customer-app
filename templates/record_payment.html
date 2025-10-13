@@ -12,8 +12,8 @@
                     <p class="category">Select a customer and the subject they are paying for.</p>
                 </div>
                 <div class="card-body">
-                                       <form action="{{ url_for('main.record_payment') }}" method="post">
-                        
+                    <form action="{{ url_for('main.record_payment') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                        
                         <!-- Step 1: Customer Selection -->
                         <div class="row">
                             <div class="col-md-12">

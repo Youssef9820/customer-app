@@ -12,6 +12,7 @@
                 </div>
                 <div class="card-body">
                     <form method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         {# --- SIMPLE NAME EDIT (FOR COUNTRY) --- #}
                         {% if item_type == 'Country' %}

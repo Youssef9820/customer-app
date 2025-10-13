@@ -18,6 +18,8 @@ __pycache__/
 # Exclude environment files
 .env
 
+.env.production
+
 # Exclude python cache
 __pycache__/
 *.pyc

@@ -37,6 +37,7 @@
                         <div class="section-header"><h5><i class="tim-icons icon-puzzle-10"></i> Manage College Years</h5></div>
 
                         <form action="{{ url_for('main.add_college_year') }}" method="post" class="settings-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                            
                             <div class="row align-items-end">
                                 <div class="col-12">
                                     <div class="form-group-enhanced">
@@ -77,6 +78,7 @@
                                                 <td><strong>Year {{ year.year_number }}</strong></td>
                                                 <td class="text-right">
                                                     <form action="{{ url_for('main.delete_college_year', year_id=year.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                                                        
                                                         <button type="submit" class="btn btn-action btn-delete">
                                                             <i class="tim-icons icon-trash-simple"></i> Delete
                                                         </button>
@@ -98,6 +100,7 @@
                         <div class="section-header"><h5><i class="tim-icons icon-calendar-60"></i> Manage Terms</h5></div>
 
                         <form action="{{ url_for('main.add_term') }}" method="post" class="settings-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="row align-items-end">
                                 <div class="col-12">
                                     <div class="form-group-enhanced">
@@ -148,6 +151,8 @@
                                         </td>
                                         <td class="text-right">
                                             <form action="{{ url_for('main.delete_term', term_id=term.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                
                                                 <button type="submit" class="btn btn-action btn-delete">
                                                     <i class="tim-icons icon-trash-simple"></i> Delete
                                                 </button>
@@ -167,6 +172,7 @@
                         <div class="section-header"><h5><i class="tim-icons icon-bullet-list-67"></i> Manage Modules</h5></div>
 
                         <form action="{{ url_for('main.add_module') }}" method="post" class="settings-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                            
                             <div class="row align-items-end">
                                 <div class="col-12">
                                     <div class="form-group-enhanced">
@@ -217,6 +223,7 @@
                                         </td>
                                         <td class="text-right">
                                             <form action="{{ url_for('main.delete_module', module_id=module.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                                                
                                                 <button type="submit" class="btn btn-action btn-delete">
                                                     <i class="tim-icons icon-trash-simple"></i> Delete
                                                 </button>

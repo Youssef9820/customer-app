@@ -1,10 +1,12 @@
 # app/__init__.py
 
 import os
+import secrets
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
+from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,6 +14,7 @@ load_dotenv()
 db = SQLAlchemy()
 login_manager = LoginManager()
 bcrypt = Bcrypt()
+csrf = CSRFProtect()
 
 def create_app():
     """Construct the core application."""
@@ -24,14 +27,36 @@ def create_app():
 
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default-fallback-key-change-me')
+    # Protect session integrity by requiring a non-default SECRET_KEY outside of development.
+    flask_env = os.environ.get('FLASK_ENV', '').lower()
+    debug_env = os.environ.get('DEBUG')
+    debug_normalized = debug_env.lower() if debug_env else None
+    is_debug_false = debug_normalized in ('0', 'false', 'no', 'off')
+    is_production = flask_env == 'production' or is_debug_false
+
+    secret = os.environ.get('SECRET_KEY')
+    if secret:
+        app.config['SECRET_KEY'] = secret
+    else:
+        if is_production:
+            # Refuse to boot in production when SECRET_KEY is missing to avoid predictable session signing keys.
+            raise RuntimeError("Missing SECRET_KEY environment variable. Refusing to start in production without a SECRET_KEY.")
+        # Generate an ephemeral random SECRET_KEY for developer convenience while keeping production strict.
+        app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
+
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
+# Enforce CSRF tokens with a bounded lifetime to block forged form submissions.
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600
+
 
     # --- Initialize extensions with the app ---
     db.init_app(app)
     login_manager.init_app(app)
     bcrypt.init_app(app)
+    csrf.init_app(app)
+
 
     login_manager.login_view = 'auth.signin'
     login_manager.login_next = 'main.index'
@@ -75,11 +100,16 @@ def create_app():
             db.session.commit()
 
         if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin', email='admin@example.com')
-            admin.set_password('password')
-            db.session.add(admin)
-            db.session.commit()
-            print("✅ Default admin user created.")
+            if is_production:
+                # Avoid provisioning shared credentials in production to eliminate backdoor admin accounts.
+                app.logger.info("Skipping admin seeding in production environment.")
+            else:
+                admin = User(username='admin', email='admin@example.com')
+                admin.set_password('password')
+                db.session.add(admin)
+                db.session.commit()
+                app.logger.info("✅ Default admin user created.")
+
 
         return app
 

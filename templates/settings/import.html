@@ -124,6 +124,7 @@
 
                 <!-- Upload Form -->
                 <form action="{{ url_for('main.import_customers') }}" method="post" enctype="multipart/form-data" class="import-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                   
                     <div class="file-upload-container">
                         <div class="file-upload-area">
                             <input type="file" name="import_file" id="import_file" required hidden>

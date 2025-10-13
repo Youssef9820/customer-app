@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, UTC
 from . import db, bcrypt
 
 
@@ -61,15 +61,16 @@ class Customer(db.Model):
     email = db.Column(db.String(120), nullable=True)  # <-- FIXED: Now optional
     year = db.Column(db.Integer, nullable=True)      # <-- NEW: Year added
     college_id = db.Column(db.Integer, db.ForeignKey('college.id'), nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC), onupdate=datetime.now(UTC))
 
 # In app.py, add this new model class after the Payment class definition
 
 class CommunicationLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    creation_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
     
     # Foreign Key to link this log entry to a specific customer
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
@@ -157,7 +158,7 @@ class Payment(db.Model):
     course_price_paid = db.Column(db.Float, nullable=False, default=0)
     application_price_paid = db.Column(db.Float, nullable=False, default=0)
     
-    payment_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    payment_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
     notes = db.Column(db.Text, nullable=True)
     
     # --- Foreign Keys ---

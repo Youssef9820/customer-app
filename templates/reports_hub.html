@@ -49,6 +49,7 @@
                 {% if instructors %}
                 <div class="report-form-container">
                     <form id="instructor-report-form" method="GET" action="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group">
                             <label for="instructor-select" class="form-label-enhanced">
                                 <i class="tim-icons icon-single-02"></i>
@@ -86,8 +87,10 @@
                 <p>Filter application fee revenue by academic year, university, or college.</p>
                 
                 <div class="report-form-container">
-                   <form id="application-report-form" method="GET" action="{{ url_for('main.application_report') }}">            
-                        <!-- Filter by University -->
+
+                    <form id="application-report-form" method="GET" action="{{ url_for('main.application_report') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- Filter by University -->
                         <div class="form-group">
                             <label for="university_filter" class="form-label-enhanced"><i class="tim-icons icon-bank"></i> Filter by University (Optional)</label>
                             <select class="form-control" id="university_filter" name="university_id">

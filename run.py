@@ -5,6 +5,7 @@
 from app import create_app, db
 from app.models import User, Currency, PaymentMethod
 
+
 app = create_app()
 
 def add_initial_data():

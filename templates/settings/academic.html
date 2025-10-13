@@ -49,6 +49,8 @@
             <div class="settings-section">
                 <div class="section-header"><h5><i class="tim-icons icon-world"></i> Add Country</h5></div>
                 <form action="{{ url_for('main.add_country') }}" method="post" class="settings-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="row align-items-end">
                         <div class="col-12 col-lg-8">
                             <div class="form-group-enhanced">
@@ -71,6 +73,8 @@
             <div class="settings-section">
                 <div class="section-header"><h5><i class="tim-icons icon-bank"></i> Add University</h5></div>
                 <form action="{{ url_for('main.add_university') }}" method="post" class="settings-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="row align-items-end">
                         <div class="col-12 col-lg-4">
                             <div class="form-group-enhanced">
@@ -104,6 +108,8 @@
             <div class="settings-section">
                 <div class="section-header"><h5><i class="tim-icons icon-istanbul"></i> Add College</h5></div>
                 <form action="{{ url_for('main.add_college') }}" method="post" class="settings-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="row align-items-end g-3">
                         <div class="col-12 col-lg-4">
                             <div class="form-group-enhanced">
@@ -175,6 +181,8 @@
                                                             <i class="tim-icons icon-pencil"></i> Edit
                                                         </a>
                                                         <form action="{{ url_for('main.delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            
                                                             <button type="submit" class="btn btn-action btn-delete">
                                                                 <i class="tim-icons icon-trash-simple"></i> Delete
                                                             </button>
@@ -208,6 +216,8 @@
                                                     <td class="text-right">
                                                         <a href="{{ url_for('main.edit_university', university_id=university.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
                                                         <form action="{{ url_for('main.delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                                                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                                                             <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
                                                         </form>
                                                     </td>
@@ -247,6 +257,8 @@
                                                     <td class="text-right">
                                                         <a href="{{ url_for('main.edit_college', college_id=college.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
                                                         <form action="{{ url_for('main.delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            
                                                             <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
                                                         </form>
                                                     </td>

@@ -34,6 +34,8 @@
             <div class="settings-section">
                 <div class="section-header"><h5><i class="tim-icons icon-book-bookmark"></i> Add New Subject</h5></div>
                 <form action="{{ url_for('main.add_subject') }}" method="post" class="settings-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group-enhanced">
@@ -172,6 +174,8 @@
                                                             <i class="tim-icons icon-pencil"></i> Edit
                                                         </a>
                                                         <form action="{{ url_for('main.delete_subject', subject_id=subject.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            
                                                             <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
                                                         </form>
                                                     </td>
