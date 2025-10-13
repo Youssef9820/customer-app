@@ -1,6 +1,6 @@
 # app/main.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, abort
 from flask_login import login_required
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -237,7 +237,10 @@ def import_customers():
             errors = []
             
             # Pre-load all colleges with their relationships to avoid many small queries
-            all_colleges = College.query.join(University).join(Country).all()
+            all_colleges = College.query.options(
+                 joinedload(College.university).joinedload(University.country)
+            ).all()
+               
             college_map = {
                 (c.university.country.name.lower(), c.university.name.lower(), c.name.lower()): c.id
                 for c in all_colleges
@@ -375,7 +378,12 @@ def add_customer():
 @login_required
 def view_customers():
     # This query joins all the tables to get all the data we need
-    all_customers = Customer.query.join(College).join(University).all()
+    all_customers = Customer.query.options(
+        joinedload(Customer.college)
+        .joinedload(College.university)
+        .joinedload(University.country)
+    ).all()
+
     # We also need to get all countries for the filter dropdown
     all_countries = Country.query.order_by(Country.name).all()
     return render_template('view_customers.html', customers=all_customers, countries=all_countries)
@@ -384,12 +392,18 @@ def view_customers():
 @main_bp.route('/customer/<int:customer_id>')
 @login_required
 def customer_profile(customer_id):
-    customer = Customer.query.get_or_404(customer_id)
+    customer = db.session.get(Customer, customer_id)
+    if customer is None:
+        abort(404)
     
     # Eagerly load all necessary related data in one go for performance
     all_payments = customer.payments.options(
         joinedload(Payment.subject).joinedload(Subject.term_info),
-        joinedload(Payment.subject).joinedload(Subject.module_info)
+        joinedload(Payment.subject).joinedload(Subject.module_info),
+        joinedload(Payment.subject)
+        .joinedload(Subject.college)
+        .joinedload(College.university)
+        .joinedload(University.country)
     ).order_by(Payment.payment_date.desc()).all()
     
     # --- 1. Calculate KPI Stat Card data (this part remains the same) ---
