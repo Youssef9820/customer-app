@@ -64,3 +64,7 @@ def index():
                                'customers_by_uni': {'labels': [i[0] for i in customers_by_uni], 'data': [i[1] for i in customers_by_uni]},
                                'customers_by_year': {'labels': [i[0] for i in customers_by_year], 'data': [i[1] for i in customers_by_year]}
                            })
+@dashboard_bp.route('/dashboard')
+@login_required
+def dashboard():
+    return index()
