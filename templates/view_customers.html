@@ -4,6 +4,48 @@
 
 {% block content %}
 
+<style>
+    /* --- START: Flexbox Fix for Filters --- */
+
+    /* 1. Create the Flex Container */
+    .filter-container {
+        display: flex;  /* Activates Flexbox */
+        flex-wrap: wrap; /* This is the magic: allows items to wrap to the next line */
+        gap: 1rem;       /* Creates consistent spacing between all filter items */
+        margin-bottom: 1rem; /* Space below the entire filter block */
+    }
+
+    /* 2. Define the Flex Items (the filters themselves) */
+    .filter-item {
+        flex-grow: 1;  /* Allows items to grow and fill available space */
+        flex-shrink: 1;/* Allows items to shrink if needed */
+        
+        /* 
+         * This is the most important part for stability.
+         * It sets a minimum width. No matter how much you zoom,
+         * the filter will never become smaller than this width.
+         * If it can't fit, it will wrap to the next line.
+        */
+        min-width: 200px; 
+    }
+
+    /* 3. Remove default Bootstrap row padding that can interfere */
+    .filter-container .form-group {
+        margin-bottom: 0; /* The 'gap' property now handles all spacing */
+    }
+    
+    /* --- END: Flexbox Fix --- */
+
+
+    /* Optional: Styling for Select2 to ensure it fits perfectly */
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px) !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem);
+    }
+</style>
+
 <div class="content">
     <div class="row">
         <div class="col-md-12">
@@ -14,10 +56,10 @@
                 </div>
                 <div class="card-body">
                     
-                    <!-- START: Filters and Search Bars -->
-                    <div class="row">
-                        <!-- Hierarchical Filters -->
-                        <div class="col-md-2">
+                    <!-- START: Responsive Filters with Flexbox -->
+                    <div class="filter-container">
+                        <!-- Each filter is now a 'filter-item' inside the flex container -->
+                        <div class="filter-item">
                             <div class="form-group">
                                 <label>Country</label>
                                 <select id="filter-country" class="form-control select2-dropdown">
@@ -28,40 +70,35 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="filter-item">
                             <div class="form-group">
                                 <label>University</label>
                                <select id="filter-university" class="form-control select2-dropdown">
-
                                     <option value="">All</option>
-                                    <!-- Options will be loaded by JavaScript -->
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="filter-item">
                             <div class="form-group">
                                 <label>College</label>
                                 <select id="filter-college" class="form-control select2-dropdown">
-
                                     <option value="">All</option>
-                                    <!-- Options will be loaded by JavaScript -->
                                 </select>
                             </div>
                         </div>
-                        <!-- Live Search Bars -->
-                        <div class="col-md-2">
+                        <div class="filter-item">
                             <div class="form-group">
                                 <label>Search by Name</label>
                                 <input type="text" id="search-name" class="form-control" placeholder="Filter by name...">
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="filter-item">
                             <div class="form-group">
                                 <label>Search by Email</label>
                                 <input type="text" id="search-email" class="form-control" placeholder="Filter by email...">
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="filter-item">
                             <div class="form-group">
                                 <label>Search by Phone</label>
                                 <input type="text" id="search-phone" class="form-control" placeholder="Filter by phone...">
@@ -72,8 +109,8 @@
                     <!-- END: Filters and Search Bars -->
 
                     <div class="table-responsive">
-                        <table class="table tablesorter " id="customer-table"> <!-- Added an ID to the table -->
-                            <thead class=" text-primary">
+                        <table class="table tablesorter" id="customer-table">
+                            <thead class="text-primary">
                                 <tr>
                                     <th>Full Name</th>
                                     <th>Email</th>
@@ -84,7 +121,6 @@
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <!-- The <tbody> will be updated by JavaScript -->
                             <tbody>
                                 {% for customer in customers %}
                                 <tr>
@@ -126,7 +162,7 @@
 
 {% endblock content %}
 
-<!-- We will add the JavaScript block here in the next step -->
+
 {% block javascripts %}
 {{ super() }} {# This includes the default scripts from the template #}
 
@@ -140,8 +176,6 @@ $(document).ready(function() {
 
     // --- Element Selectors ---
     const countryFilter = document.getElementById('filter-country');
-    //...
-
     const universityFilter = document.getElementById('filter-university');
     const collegeFilter = document.getElementById('filter-college');
     const nameSearch = document.getElementById('search-name');
@@ -149,58 +183,53 @@ $(document).ready(function() {
     const phoneSearch = document.getElementById('search-phone');
     const customerTableBody = document.querySelector('#customer-table tbody');
 
-  function updateSelect(selectElement, options, placeholder) {
-    const $select = $(selectElement); // Get the jQuery version of the element
-    $select.empty(); // Use jQuery's empty() method
-    
-    // Add the placeholder
-    $select.append(new Option(placeholder, ''));
+    function updateSelect(selectElement, options, placeholder) {
+        const $select = $(selectElement); // Get the jQuery version of the element
+        $select.empty(); // Use jQuery's empty() method
+        
+        // Add the placeholder
+        $select.append(new Option(placeholder, ''));
 
-    // Add the new options
-    options.forEach(option => {
-        $select.append(new Option(option.name, option.id));
-    });
+        // Add the new options
+        options.forEach(option => {
+            $select.append(new Option(option.name, option.id));
+        });
 
-    // Trigger the change event for Select2 to re-render
-    $select.trigger('change');
-}
-
-// --- Logic for Flash Messages via Chatbot ---
-    function showChatbotMessage(text, type = 'success') {
-    const chatbotContainer = document.getElementById('chatbot-container');
-    const chatbotText = document.getElementById('chatbot-text');
-
-    // Remove old color classes
-    chatbotContainer.classList.remove('chatbot-success', 'chatbot-danger');
-    
-    // Add the new color class based on the type
-    if (type === 'success') {
-        chatbotContainer.classList.add('chatbot-success');
-    } else if (type === 'danger') {
-        chatbotContainer.classList.add('chatbot-danger');
+        // Trigger the change event for Select2 to re-render
+        $select.trigger('change');
     }
 
-    chatbotText.textContent = text;
-    chatbotContainer.classList.remove('chatbot-hidden');
-    chatbotContainer.classList.add('chatbot-visible');
+    // --- Logic for Flash Messages via Chatbot ---
+    function showChatbotMessage(text, type = 'success') {
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const chatbotText = document.getElementById('chatbot-text');
 
-    setTimeout(() => {
-        chatbotContainer.classList.remove('chatbot-visible');
-        chatbotContainer.classList.add('chatbot-hidden');
-    }, 5000);
-}
+        chatbotContainer.classList.remove('chatbot-success', 'chatbot-danger');
+        
+        if (type === 'success') {
+            chatbotContainer.classList.add('chatbot-success');
+        } else if (type === 'danger') {
+            chatbotContainer.classList.add('chatbot-danger');
+        }
 
-// Check the URL for a message when the page loads
-const urlParams = new URLSearchParams(window.location.search);
-const message = urlParams.get('message');
-const messageType = urlParams.get('type');
+        chatbotText.textContent = text;
+        chatbotContainer.classList.remove('chatbot-hidden');
+        chatbotContainer.classList.add('chatbot-visible');
 
-if (message) {
-    showChatbotMessage(message, messageType);
-    // Optional: Clean the URL so the message doesn't reappear on refresh
-    window.history.replaceState({}, document.title, window.location.pathname);
-}
-// --- End of Flash Message Logic ---
+        setTimeout(() => {
+            chatbotContainer.classList.remove('chatbot-visible');
+            chatbotContainer.classList.add('chatbot-hidden');
+        }, 5000);
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get('message');
+    const messageType = urlParams.get('type');
+
+    if (message) {
+        showChatbotMessage(message, messageType);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     // --- Main function to fetch and render customers ---
     function fetchAndRenderCustomers() {
@@ -224,20 +253,26 @@ if (message) {
                 } else {
                     data.customers.forEach(customer => {
                         const row = document.createElement('tr');
+                        // IMPORTANT: Use url_for inside the template, not in JS.
+                        // We construct the URLs manually here.
+                        const editUrl = `/edit_customer/${customer.id}`;
+                        const deleteUrl = `/delete_customer/${customer.id}`;
+                        const csrfToken = '{{ csrf_token() }}'; // Get CSRF token from template
+
                         row.innerHTML = `
-                            <td>${customer.full_name}</td>
-                            <td>${customer.email}</td>
-                            <td>${customer.whatsapp_number}</td>
-                            <td>${customer.year}</td>
+                            <td><a href="/customer_profile/${customer.id}">${customer.full_name}</a></td>
+                            <td>${customer.email || 'N/A'}</td>
+                            <td>${customer.whatsapp_number || 'N/A'}</td>
+                            <td>${customer.year || 'N/A'}</td>
                             <td>${customer.college_name}</td>
                             <td>${customer.university_name}</td>
-                          <td class="text-center">
-    <a href="/edit_customer/${customer.id}" class="btn btn-sm btn-success">Edit</a>
-    <form action="/delete_customer/${customer.id}" method="POST" style="display:inline;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">        
-        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this customer?');">Delete</button>
-    </form>
-</td>
+                            <td class="text-center">
+                                <a href="${editUrl}" class="btn btn-sm btn-success">Edit</a>
+                                <form action="${deleteUrl}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this customer?');">
+                                    <input type="hidden" name="csrf_token" value="${csrfToken}">        
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
                         `;
                         customerTableBody.appendChild(row);
                     });
@@ -245,54 +280,41 @@ if (message) {
             });
     }
 
-    // --- Event Listeners for Dynamic Dropdowns ---
-  // --- Event Listeners for Dynamic Dropdowns (jQuery version for Select2) ---
-$('#filter-country').on('change', function() {
-    const countryId = $(this).val(); // Use jQuery's .val()
-    // We don't need to manually update the dropdowns here,
-    // the next fetch will do it.
-    if (countryId) {
-        fetch(`/api_get_universities/${countryId}`)
-            .then(response => response.json())
-            .then(data => {
-                updateSelect(universityFilter, data.universities, 'All');
-                // IMPORTANT: Clear the college filter when the country changes
-                updateSelect(collegeFilter, [], 'All');
-            });
-    } else {
-        // If "All" countries is selected, clear both lower dropdowns
-        updateSelect(universityFilter, [], 'All');
-        updateSelect(collegeFilter, [], 'All');
-    }
-    fetchAndRenderCustomers(); // Re-filter when country changes
-});
+    // --- Event Listeners for Dynamic Dropdowns (jQuery version for Select2) ---
+    $('#filter-country').on('change', function() {
+        const countryId = $(this).val();
+        if (countryId) {
+            fetch(`/api_get_universities/${countryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateSelect(universityFilter, data.universities, 'All');
+                    updateSelect(collegeFilter, [], 'All');
+                });
+        } else {
+            updateSelect(universityFilter, [], 'All');
+            updateSelect(collegeFilter, [], 'All');
+        }
+        fetchAndRenderCustomers();
+    });
 
-
-$('#filter-university').on('change', function() {
-    const universityId = $(this).val(); // Use jQuery's .val()
-    if (universityId) {
-       fetch(`/api_get_colleges/${universityId}`)
-            .then(response => response.json())
-            .then(data => updateSelect(collegeFilter, data.colleges, 'All'));
-    } else {
-        // If "All" universities is selected, clear the college dropdown
-        updateSelect(collegeFilter, [], 'All');
-    }
-    fetchAndRenderCustomers(); // Re-filter when university changes
-});
-
+    $('#filter-university').on('change', function() {
+        const universityId = $(this).val();
+        if (universityId) {
+           fetch(`/api_get_colleges/${universityId}`)
+                .then(response => response.json())
+                .then(data => updateSelect(collegeFilter, data.colleges, 'All'));
+        } else {
+            updateSelect(collegeFilter, [], 'All');
+        }
+        fetchAndRenderCustomers();
+    });
 
     // --- Event Listeners for all filters (Select2 Compatible) ---
-$('#filter-college').on('change', fetchAndRenderCustomers);
-
+    $('#filter-college').on('change', fetchAndRenderCustomers);
     
-    // Use 'keyup' for live search as the user types
-    nameSearch.addEventListener('keyup', fetchAndRenderCustomers);
-    emailSearch.addEventListener('keyup', fetchAndRenderCustomers);
-    phoneSearch.addEventListener('keyup', fetchAndRenderCustomers);
-
-    // Initial load of customers when the page is ready
-    // fetchAndRenderCustomers(); // You can uncomment this if you want the table to load empty initially
+    $('#search-name').on('keyup', fetchAndRenderCustomers);
+    $('#search-email').on('keyup', fetchAndRenderCustomers);
+    $('#search-phone').on('keyup', fetchAndRenderCustomers);
 });
 </script>
 
