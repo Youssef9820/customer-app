@@ -1,10 +1,9 @@
 # run.py
-
 # This file's only job is to create and run the app.
 
+import os
 from app import create_app, db
 from app.models import User, Currency, PaymentMethod
-
 
 app = create_app()
 
@@ -25,10 +24,11 @@ def add_initial_data():
         ])
         db.session.commit()
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        add_initial_data()
+# ✅ نفّذ التهيئة والـseeding عند الاستيراد (علشان Gunicorn)
+with app.app_context():
+    db.create_all()
+    add_initial_data()
+    if os.getenv('FLASK_ENV', '').lower() != 'production':
         if not User.query.filter_by(username='admin').first():
             print("Creating default admin user...")
             user = User(username='admin', email='admin@example.com')
@@ -37,5 +37,5 @@ if __name__ == '__main__':
             db.session.commit()
             print("Admin user created.")
 
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
-
