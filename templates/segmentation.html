@@ -210,6 +210,8 @@ $(document).ready(function() {
         customerProfile: `{{ url_for('main.customer_profile', customer_id=0) }}`,
         exportSegment: `{{ url_for('main.export_segment_csv') }}`
     };
+    // Include the CSRF token so JSON POST requests pass protection checks.
+    const csrfToken = '{{ csrf_token() }}';
 
     countrySelect.on('change', function() {
     const countryId = $(this).val();
@@ -341,6 +343,10 @@ function updateSubjectFilter() {
             url: urls.segmentStudents,
             type: 'POST',
             contentType: 'application/json',
+                        headers: {
+                'X-CSRFToken': csrfToken
+            },
+
             data: JSON.stringify(filters),
             success: function(response) {
                 lastFilters = filters;
