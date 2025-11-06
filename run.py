@@ -28,14 +28,6 @@ def add_initial_data():
 with app.app_context():
     db.create_all()
     add_initial_data()
-    if os.getenv('FLASK_ENV', '').lower() != 'production':
-        if not User.query.filter_by(username='admin').first():
-            print("Creating default admin user...")
-            user = User(username='admin', email='admin@example.com')
-            user.set_password('Admin@1234!')
-            db.session.add(user)
-            db.session.commit()
-            print("Admin user created.")
-
+  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
