@@ -188,16 +188,7 @@ def create_app():
             ])
             db.session.commit()
 
-        if not User.query.filter_by(username='admin').first():
-            if is_production:
-                # Avoid provisioning shared credentials in production to eliminate backdoor admin accounts.
-                app.logger.info("Skipping admin seeding in production environment.")
-            else:
-                admin = User(username='admin', email='admin@example.com')
-                admin.set_password('Admin@1234!')
-                db.session.add(admin)
-                db.session.commit()
-                app.logger.info("✅ Default admin user created.")
+
 
 
 
