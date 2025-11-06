@@ -80,9 +80,9 @@
 }
 /* Enhanced Dashboard Styles */
     .content {
-        padding: 20px;
-        animation: fadeIn 0.5s ease-in;
-    }
+    padding: 30px 25px;
+    animation: fadeIn 0.5s ease-in;
+}
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
@@ -91,13 +91,14 @@
 
     /* Enhanced Stat Cards */
     .card-stats {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border: 1px solid rgba(94,114,228,0.1);
+    background: linear-gradient(135deg, rgba(94,114,228,0.02) 0%, rgba(0,0,0,0) 100%);
+}
     .card-stats:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 20px rgba(94,114,228,0.25);
@@ -126,25 +127,43 @@
         color: #fff;
     }
 
-    .icon-warning { background: linear-gradient(135deg, #f5365c 0%, #fb6340 100%); }
-    .icon-primary { background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%); }
-    .icon-success { background: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%); }
-    .icon-danger { background: linear-gradient(135deg, #fb6340 0%, #fbb140 100%); }
-    .icon-info { background: linear-gradient(135deg, #11cdef 0%, #1171ef 100%); }
-    .icon-badge { background: linear-gradient(135deg, #825ee4 0%, #5e72e4 100%); }
-
+.icon-warning { 
+    background: linear-gradient(135deg, #f5365c 0%, #fb6340 100%);
+    box-shadow: 0 4px 12px rgba(245,54,92,0.3);
+}
+.icon-primary { 
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    box-shadow: 0 4px 12px rgba(94,114,228,0.3);
+}
+.icon-success { 
+    background: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
+    box-shadow: 0 4px 12px rgba(45,206,137,0.3);
+}
+.icon-danger { 
+    background: linear-gradient(135deg, #fb6340 0%, #fbb140 100%);
+    box-shadow: 0 4px 12px rgba(251,99,64,0.3);
+}
+.icon-info { 
+    background: linear-gradient(135deg, #11cdef 0%, #1171ef 100%);
+    box-shadow: 0 4px 12px rgba(17,205,239,0.3);
+}
+.icon-badge { 
+    background: linear-gradient(135deg, #825ee4 0%, #5e72e4 100%);
+    box-shadow: 0 4px 12px rgba(130,94,228,0.3);
+}
     .numbers {
         text-align: right;
     }
 
-    .numbers .card-category {
-        font-size: 13px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        opacity: 0.7;
-        margin-bottom: 8px;
-    }
+   .numbers .card-category {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-bottom: 10px;
+    color: rgba(255,255,255,0.85);
+}
 
     .numbers .card-title {
     font-size: 36px;
@@ -156,11 +175,17 @@
 
     /* Enhanced Chart Cards */
     .card-chart {
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
-    }
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 30px;
+    border: 1px solid rgba(94,114,228,0.08);
+}
+.card-chart .chart-area canvas {
+    background: linear-gradient(180deg, rgba(94,114,228,0.03) 0%, rgba(0,0,0,0) 100%);
+    border-radius: 8px;
+    padding: 10px;
+}
 
     .card-chart:hover {
         box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -172,18 +197,38 @@
 }
 
     .card-chart .card-title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
+.card-chart .card-title i {
+    font-size: 20px;
+}
+.card-chart .card-header h4 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-chart .card-header h4 i {
+    font-size: 20px;
+}
     .card-chart .card-category {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.6;
-        font-weight: 500;
-    }
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.8;
+    font-weight: 600;
+    color: #667eea;
+}
 
     .chart-area {
     height: 400px;
@@ -207,6 +252,11 @@
         outline: none;
         box-shadow: 0 0 0 3px rgba(94,114,228,0.1);
     }
+    #chart-selector option {
+    background: #1e1e2f;
+    color: #fff;
+    padding: 10px;
+}
 
     .select2-container--bootstrap4 .select2-selection {
         border-radius: 8px !important;
@@ -221,13 +271,14 @@
     }
 
     .tablesorter thead th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        padding: 16px 12px;
-        border-bottom: 2px solid rgba(94,114,228,0.3);
-    }
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    padding: 18px 16px;
+    border-bottom: 2px solid rgba(94,114,228,0.4);
+    background: rgba(94,114,228,0.05);
+}
 
     .tablesorter tbody tr {
         transition: all 0.2s ease;
@@ -245,12 +296,20 @@
     }
 
     .tablesorter tbody td a {
-        color: #5e72e4;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        position: relative;
-    }
+    color: #667eea;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.tablesorter tbody td a:hover {
+    color: #fff;
+    background: rgba(102,126,234,0.2);
+    padding-left: 8px;
+}
 
     .tablesorter tbody td a:hover {
         color: #825ee4;
@@ -328,8 +387,10 @@
     padding: 20px 28px 28px;
 }
 
-.card-stats .card-body {
-    padding: 24px 20px;
+.card-stats .info-icon,
+.card-stats .numbers {
+    transform-origin: center;
+    will-change: transform;
 }
 
     /* Dropdown Enhancement */
@@ -1741,6 +1802,24 @@
         font-size: 12px;
         padding: 6px 12px;
     }
+}
+/* Optimize rendering performance */
+.card-stats,
+.card-chart,
+.tablesorter {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+/* Accessibility - Better focus states */
+.card-stats:focus-within,
+.card-chart:focus-within {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
 }
 
 /* ================================================================== */
