@@ -59,22 +59,28 @@ def add_country():
         db.session.add(new_country)
         db.session.commit()
         flash(f"Country '{name}' added successfully.", 'success')
-    # This redirect will now trigger the chatbot
-    return redirect(url_for('settings.academic_settings', message=f"Country '{name}' added.", type='success', active_tab='academic'))
+        return redirect(url_for('settings.academic_settings', active_tab='academic'))
+    else:
+        flash('Country name is required.', 'danger')
+        return redirect(url_for('settings.academic_settings', active_tab='academic'))
 
 
 
 @main_bp.route('/add_university', methods=['POST'])
 @login_required
 def add_university():
-    
     name = request.form.get('university_name')
     country_id = request.form.get('country_id')
+    
     if name and country_id:
         new_university = University(name=name, country_id=country_id)
         db.session.add(new_university)
         db.session.commit()
-    return redirect(url_for('settings.academic_settings', message=f"University '{name}' added.", type='success', active_tab='academic'))
+        flash(f"University '{name}' added successfully.", 'success')
+        return redirect(url_for('settings.academic_settings', active_tab='academic'))
+    else:
+        flash('University name and country are required.', 'danger')
+        return redirect(url_for('settings.academic_settings', active_tab='academic'))
 
 
 @main_bp.route('/add_college', methods=['POST'])
@@ -94,9 +100,13 @@ def add_college():
         )
         db.session.add(new_college)
         db.session.commit()
-        
-    return redirect(url_for('settings.academic_settings', message=f"College '{name}' added.", type='success', active_tab='academic'))
-
+        flash(f"College '{name}' added successfully.", 'success')
+        return redirect(url_for('settings.academic_settings', active_tab='academic'))
+    else:
+        flash('College name, university, and structure type are required.', 'danger')
+        return redirect(url_for('settings.academic_settings', active_tab='academic'))
+    
+    
 @main_bp.route('/add_college_year', methods=['POST'])
 @login_required
 def add_college_year():
@@ -121,22 +131,19 @@ def add_college_year():
 @login_required
 def add_instructor():
     name = request.form.get('instructor_name')
-    # THIS IS THE CRITICAL CHANGE:
     # If the email from the form is an empty string, set it to None.
     email = request.form.get('instructor_email') or None
     
     if not name:
         flash('Instructor name is required.', 'danger')
-        return redirect(url_for('settings.instructors_settings', message=f"Instructor '{name}' added.", type='success', active_tab='instructors'))
-
+        return redirect(url_for('settings.instructors_settings', active_tab='instructors'))
 
     # Now, if the email was empty, we are saving None, which works with the UNIQUE constraint.
     new_instructor = Instructor(name=name, email=email)
     db.session.add(new_instructor)
     db.session.commit()
     flash(f"Instructor '{name}' added successfully.", 'success')
-    return redirect(url_for('settings.instructors_settings', message=f"Instructor '{name}' added.", type='success', active_tab='instructors'))
-
+    return redirect(url_for('settings.instructors_settings', active_tab='instructors'))
 
 @main_bp.route('/add_term', methods=['POST'])
 @login_required
@@ -183,21 +190,29 @@ def add_module():
 @main_bp.route('/add_subject', methods=['POST'])
 @login_required
 def add_subject():
+    # Validate required fields first
+    name = request.form.get('subject_name')
+    year = request.form.get('year')
+    college_id = request.form.get('college_id')
+    course_price = request.form.get('course_price')
+    app_price = request.form.get('app_price')
+    currency_id = request.form.get('currency_id')
+    
+    if not all([name, year, college_id, course_price, app_price, currency_id]):
+        flash('All required fields must be filled.', 'danger')
+        return redirect(url_for('settings.financial_settings', active_tab='financial'))
+    
     try:
         new_subject = Subject(
-            name=request.form['subject_name'],
-            year=request.form['year'],
-            college_id=request.form['college_id'],
-            
-            # === NEW LOGIC FOR TERM/MODULE ID ===
+            name=name,
+            year=year,
+            college_id=college_id,
             term_id=request.form.get('term_id', type=int) or None,
             module_id=request.form.get('module_id', type=int) or None,
-            # ====================================
-
-            default_course_price=request.form['course_price'],
-            default_application_price=request.form['app_price'],
+            default_course_price=course_price,
+            default_application_price=app_price,
             instructor_id=request.form.get('instructor_id') or None,
-            currency_id=request.form['currency_id']
+            currency_id=currency_id
         )
         db.session.add(new_subject)
         db.session.commit()
@@ -207,6 +222,7 @@ def add_subject():
         flash(f"Error adding subject: {e}", 'danger')
         
     return redirect(url_for('settings.financial_settings', active_tab='financial'))
+
 
 @main_bp.route('/import_customers', methods=['POST'])
 @login_required
@@ -385,26 +401,34 @@ def record_payment_page():
 @main_bp.route('/record_payment', methods=['POST'])
 @login_required
 def record_payment():
+    # Validate required fields first
+    customer_id = request.form.get('customer_id')
+    subject_id = request.form.get('subject_id')
+    course_price_paid = request.form.get('course_price_paid')
+    app_price_paid = request.form.get('app_price_paid')
+    payment_method_id = request.form.get('payment_method_id')
+    
+    if not all([customer_id, subject_id, course_price_paid, app_price_paid, payment_method_id]):
+        flash('All required payment fields must be filled.', 'danger')
+        return redirect(url_for('main.record_payment_page'))
+    
     try:
         new_payment = Payment(
-            customer_id=request.form['customer_id'],
-            subject_id=request.form['subject_id'],
-            course_price_paid=request.form['course_price_paid'],
-            application_price_paid=request.form['app_price_paid'],
-            payment_method_id=request.form['payment_method_id'],
+            customer_id=customer_id,
+            subject_id=subject_id,
+            course_price_paid=course_price_paid,
+            application_price_paid=app_price_paid,
+            payment_method_id=payment_method_id,
             notes=request.form.get('notes')
         )
         db.session.add(new_payment)
         db.session.commit()
         flash('Payment recorded successfully!', 'success')
-        # Redirect to a future customer profile page, or back to the form for now
         return redirect(url_for('main.record_payment_page')) 
     except Exception as e:
         db.session.rollback()
         flash(f"Error recording payment: {e}", 'danger')
         return redirect(url_for('main.record_payment_page'))
-
-# In app.py, add this new function
 
 @main_bp.route('/view_payments')
 @login_required
