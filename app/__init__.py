@@ -122,11 +122,17 @@ def create_app():
 # Enforce CSRF tokens with a bounded lifetime to block forged form submissions.
     app.config['WTF_CSRF_ENABLED'] = True
     app.config['WTF_CSRF_TIME_LIMIT'] = 3600
-    # --- Allow session cookies over local network (192.168.x.x) ---
-    app.config['SESSION_COOKIE_DOMAIN'] = None
-    app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP
-    app.config['SESSION_COOKIE_SAMESITE'] = None  # Allow LAN IPs like 192.168.x.x
-    app.config['WTF_CSRF_SSL_STRICT'] = False
+
+    if not is_production:
+        # --- Allow session cookies over local network (192.168.x.x) ---
+          app.config['SESSION_COOKIE_DOMAIN'] = None
+          app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP
+          app.config['SESSION_COOKIE_SAMESITE'] = None  # Allow LAN IPs like 192.168.x.x
+          app.config['WTF_CSRF_SSL_STRICT'] = False
+    else:
+        app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protect against CSRF
+        app.config['WTF_CSRF_SSL_STRICT'] = True  # Require HTTPS for CSRF
+
 
 
     # --- Initialize extensions with the app ---

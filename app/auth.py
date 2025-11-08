@@ -68,14 +68,12 @@ def signin():
 
         user = User.query.filter_by(username=username).first()
         
-        submitted_password = password
-        if user and current_app.config.get('TESTING') and password == 'password':
-            submitted_password = 'Admin@1234!'
 
-        if not user or not user.check_password(submitted_password):
 
-            flash('Invalid username or password. Please try again.', 'danger')
-            return redirect(url_for('auth.signin'))
+        if not user or not user.check_password(password):
+             flash('Invalid username or password. Please try again.', 'danger')
+             return redirect(url_for('auth.signin'))
+
 
         login_user(user, remember=remember)
         
