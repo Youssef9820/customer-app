@@ -330,14 +330,15 @@ def import_customers():
     try:
         db.session.bulk_save_objects(new_customers)
         db.session.commit()
-    except Exception:
+    except Exception as e:
         db.session.rollback()
         current_app.logger.exception(
-            "Customer import failed during database commit: user_id=%s filename=%s",
+            "Customer import failed during database commit: user_id=%s filename=%s error=%s",
             getattr(current_user, 'id', 'anonymous'),
             sanitized_filename,
+             str(e)  # ADD THIS to see the actual error
         )
-        flash('An unexpected error occurred while importing customers.', 'danger')
+        flash(f'Database error: {str(e)}', 'danger')  # SHOW the error to help debug
         return render_template('settings/import.html', active_tab='import'), 500
 
     success_message = f"Successfully imported {len(new_customers)} customers."
