@@ -1,32 +1,314 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Record New Payment {% endblock %}
+{% block title %}Record Payment{% endblock %}
+
+{% block page_title %}Record Payment{% endblock %}
 
 {% block content %}
+
+<style>
+    /* Progress Steps */
+    .payment-steps {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+        padding: 20px 0;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        transition: all 0.3s;
+    }
+
+    .step-label {
+        margin-left: 10px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .step.active .step-circle {
+        background-color: #e14eca;
+        border-color: #e14eca;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(225, 78, 202, 0.5);
+    }
+
+    .step.active .step-label {
+        color: #fff;
+    }
+
+    .step.completed .step-circle {
+        background-color: #00f2c3;
+        border-color: #00f2c3;
+        color: #1e1e2e;
+    }
+
+    .step.completed .step-label {
+        color: #00f2c3;
+    }
+
+    .step-connector {
+        width: 80px;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin: 0 15px;
+    }
+
+    .step.completed ~ .step .step-connector {
+        background-color: #00f2c3;
+    }
+
+    /* Section Styling */
+    .payment-section {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: none;
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    .payment-section.active {
+        display: block;
+    }
+
+    .payment-section.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #e14eca;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        font-size: 1.3rem;
+    }
+
+    /* Consistent Form Layout */
+    .form-row-custom {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-row-custom.two-col {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-row-custom.one-col {
+        grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 992px) {
+        .form-row-custom {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-group-custom {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group-custom label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .form-group-custom label i {
+        margin-right: 5px;
+        color: #e14eca;
+    }
+
+    /* Price Display */
+    .price-display {
+        background-color: rgba(225, 78, 202, 0.1);
+        border: 1px solid rgba(225, 78, 202, 0.3);
+        border-radius: 4px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .price-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 5px;
+    }
+
+    .price-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e14eca;
+    }
+
+    /* Selected Info Box */
+    .selected-info {
+        background-color: rgba(0, 242, 195, 0.1);
+        border-left: 3px solid #00f2c3;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+
+    .selected-info-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 5px;
+    }
+
+    .selected-info-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #00f2c3;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 30px;
+    }
+
+    .action-buttons .btn {
+        min-width: 120px;
+    }
+
+    /* Select2 Customization */
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: 42px !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+        line-height: 40px !important;
+        color: #fff !important;
+    }
+
+    .form-control {
+        height: 42px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+
+    .form-control:focus {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: #e14eca;
+        color: #fff;
+    }
+
+    textarea.form-control {
+        height: auto;
+    }
+
+    /* Make completed steps clickable */
+.step.completed {
+    cursor: pointer;
+}
+
+.step.completed:hover .step-circle {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(0, 242, 195, 0.7);
+}
+
+.step.completed:hover .step-label {
+    color: #00f2c3;
+}
+</style>
+
 <div class="content">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
                     <h5 class="title">Record New Payment</h5>
-                    <p class="category">Select a customer and the subject they are paying for.</p>
+                    <p class="category">Follow the steps below to record a payment</p>
                 </div>
                 <div class="card-body">
-                    <form action="{{ url_for('main.record_payment') }}" method="post">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                        
-                        <!-- Step 1: Customer Selection -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Step 1: Select Customer</label>
+                    
+                    <!-- Progress Steps -->
+                    <div class="payment-steps">
+                        <div class="step active" id="step-indicator-1">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">Customer</div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" id="step-indicator-2">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">Subject</div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" id="step-indicator-3">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">Payment</div>
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('main.record_payment') }}" method="post" id="payment-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <!-- STEP 1: Customer Selection -->
+                        <div class="payment-section active" id="section-1">
+                            <div class="section-title">
+                                <i class="tim-icons icon-single-02"></i>
+                                Select Customer
+                            </div>
+                            <div class="form-row-custom one-col">
+                                <div class="form-group-custom">
+                                    <label>
+                                        <i class="tim-icons icon-zoom-split"></i>
+                                        Search for Customer
+                                    </label>
                                     <select id="customer-select" name="customer_id" class="form-control select2-dropdown" required>
-                                        <option value="">-- Search for a customer --</option>
+                                        <option value="">-- Type to search for a customer --</option>
                                         {% for customer in all_customers %}
-                                            <!-- Store customer's college and year info directly on the option -->
                                             <option value="{{ customer.id }}" 
                                                     data-college-id="{{ customer.college_id }}" 
+                                                    data-college-name="{{ customer.college.name }}"
+                                                    data-university-name="{{ customer.college.university.name }}"
                                                     data-year="{{ customer.year }}">
-                                                {{ customer.full_name }} ({{ customer.college.name }} - Year {{ customer.year }})
+                                                {{ customer.full_name }} - {{ customer.college.name }} (Year {{ customer.year }})
                                             </option>
                                         {% endfor %}
                                     </select>
@@ -34,222 +316,345 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Dynamic Subject Filters (Initially hidden) -->
-                        <div id="subject-filters-wrapper" style="display: none;">
-                            <hr>
-                            <p class="category">Step 2: Select Subject</p>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>College</label>
-                                        <!-- This will be disabled and auto-filled -->
-                                        <input type="text" id="college-display" class="form-control" disabled>
-                                    </div>
+                        <!-- STEP 2: Subject Selection -->
+                        <div class="payment-section" id="section-2">
+                            <!-- Selected Customer Info -->
+                            <div class="selected-info">
+                                <div class="selected-info-label">Selected Customer</div>
+                                <div class="selected-info-value" id="customer-info"></div>
+                            </div>
+
+                            <div class="section-title">
+                                <i class="tim-icons icon-book-bookmark"></i>
+                                Select Subject
+                            </div>
+<!-- Action Buttons for Step 2 -->
+<div class="action-buttons" style="margin-top: 0; margin-bottom: 20px;">
+    <button type="button" class="btn btn-secondary" onclick="showSection(1)">
+        <i class="tim-icons icon-minimal-left"></i> Back to Customer
+    </button>
+</div>
+                            <div class="form-row-custom" id="subject-selection-row">
+                                <!-- These will be dynamically shown based on structure type -->
+                                <div class="form-group-custom" id="term-group" style="display: none;">
+                                    <label>
+                                        <i class="tim-icons icon-calendar-60"></i>
+                                        Term
+                                    </label>
+                                    <select id="term-select" class="form-control select2-dropdown">
+                                        <option value="">-- Select Term --</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <!-- This wrapper will contain either the term or module dropdown -->
-                                    <div id="structure-wrapper">
-                                        <div id="term-select-wrapper" style="display: none;">
-                                            <div class="form-group">
-                                                <label>Select Term</label>
-                                                <select id="term-select" class="form-control select2-dropdown"></select>
-                                            </div>
-                                        </div>
-                                        <div id="module-select-wrapper" style="display: none;">
-                                            <div class="form-group">
-                                                <label>Select Module</label>
-                                                <select id="module-select" class="form-control select2-dropdown"></select>
-                                            </div>
-                                        </div>
-                                    </div>
+
+                                <div class="form-group-custom" id="module-group" style="display: none;">
+                                    <label>
+                                        <i class="tim-icons icon-bullet-list-67"></i>
+                                        Module
+                                    </label>
+                                    <select id="module-select" class="form-control select2-dropdown">
+                                        <option value="">-- Select Module --</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Select Subject</label>
-                                        <select id="subject-select" name="subject_id" class="form-control select2-dropdown" required>
-                                            <option value="">-- Select Term/Module First --</option>
-                                        </select>
-                                    </div>
+
+                                <div class="form-group-custom">
+                                    <label>
+                                        <i class="tim-icons icon-book-bookmark"></i>
+                                        Subject
+                                    </label>
+                                    <select id="subject-select" name="subject_id" class="form-control select2-dropdown" required>
+                                        <option value="">-- Select Term/Module First --</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Step 3: Payment Details (Initially hidden) -->
-                        <div id="payment-details-wrapper" style="display: none;">
-                            <hr>
-                            <p class="category">Step 3: Enter Payment Details</p>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Course Price Paid</label>
-                                        <input type="number" step="0.01" id="course_price_paid" name="course_price_paid" class="form-control" value="0" required>
-                                    </div>
+                        <!-- STEP 3: Payment Details -->
+                        <div class="payment-section" id="section-3">
+                            <!-- Selected Subject Info -->
+                            <div class="selected-info">
+                                <div class="selected-info-label">Selected Subject</div>
+                                <div class="selected-info-value" id="subject-info"></div>
+                            </div>
+
+                            <div class="section-title">
+                                <i class="tim-icons icon-money-coins"></i>
+                                Payment Details
+                            </div>
+
+                            <!-- Price Display -->
+                            <div class="form-row-custom">
+                                <div class="price-display">
+                                    <div class="price-label">Default Course Price</div>
+                                    <div class="price-value" id="default-course-price">0.00</div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Application Price Paid</label>
-                                        <input type="number" step="0.01" id="app_price_paid" name="app_price_paid" class="form-control" value="0" required>
-                                    </div>
+                                <div class="price-display">
+                                    <div class="price-label">Default App Price</div>
+                                    <div class="price-value" id="default-app-price">0.00</div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Payment Method</label>
-                                        <select name="payment_method_id" class="form-control select2-dropdown" required>
-                                            {% for method in all_payment_methods %}
-                                                <option value="{{ method.id }}">{{ method.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
+                                <div class="price-display">
+                                    <div class="price-label">Total Default</div>
+                                    <div class="price-value" id="total-default">0.00</div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>Notes (Optional)</label>
-                                        <textarea name="notes" class="form-control" rows="3" placeholder="e.g., Paid in cash, discount applied, etc."></textarea>
-                                    </div>
+
+                            <!-- Payment Input Fields -->
+                            <div class="form-row-custom">
+                                <div class="form-group-custom">
+                                    <label>
+                                        <i class="tim-icons icon-coins"></i>
+                                        Course Price Paid
+                                    </label>
+                                    <input type="number" step="0.01" id="course_price_paid" name="course_price_paid" 
+                                           class="form-control" value="0" required min="0">
+                                </div>
+                                <div class="form-group-custom">
+                                    <label>
+                                        <i class="tim-icons icon-coins"></i>
+                                        Application Price Paid
+                                    </label>
+                                    <input type="number" step="0.01" id="app_price_paid" name="app_price_paid" 
+                                           class="form-control" value="0" required min="0">
+                                </div>
+                                <div class="form-group-custom">
+                                    <label>
+                                        <i class="tim-icons icon-credit-card"></i>
+                                        Payment Method
+                                    </label>
+                                    <select name="payment_method_id" class="form-control select2-dropdown" required>
+                                        <option value="">-- Select Method --</option>
+                                        {% for method in all_payment_methods %}
+                                            <option value="{{ method.id }}">{{ method.name }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
+
+                            <div class="form-row-custom one-col">
+                                <div class="form-group-custom">
+                                    <label>
+                                        <i class="tim-icons icon-notes"></i>
+                                        Notes (Optional)
+                                    </label>
+                                    <textarea name="notes" class="form-control" rows="3" 
+                                              placeholder="e.g., Discount applied, partial payment, etc."></textarea>
+                                </div>
+                            </div>
+
+<!-- Action Buttons -->
+<div class="action-buttons">
+    <button type="button" class="btn btn-secondary" onclick="showSection(2)">
+        <i class="tim-icons icon-minimal-left"></i> Back to Subject
+    </button>
+    <button type="submit" class="btn btn-success">
+        <i class="tim-icons icon-check-2"></i> Save Payment
+    </button>
+</div>
                         </div>
 
-                        <div class="card-footer text-right">
-                            <button type="submit" class="btn btn-fill btn-success">Save Payment</button>
-                        </div>
                     </form>
-
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock content %}
 
 {% block javascripts %}
 {{ super() }}
 <script>
-    $(document).ready(function() {
-        // Initialize all dropdowns on this page
-        $('.select2-dropdown').select2({
-            theme: "bootstrap4"
-        });
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2-dropdown').select2({
+        theme: "bootstrap4",
+        width: '100%'
+    });
 
-        // --- START OF NEW DYNAMIC PAYMENT FORM LOGIC ---
-        const customerSelect = $('#customer-select');
-        const filtersWrapper = $('#subject-filters-wrapper');
-        const paymentWrapper = $('#payment-details-wrapper');
-        
-        const collegeDisplay = $('#college-display');
-        const termWrapper = $('#term-select-wrapper');
-        const moduleWrapper = $('#module-select-wrapper');
-        const termSelect = $('#term-select');
-        const moduleSelect = $('#module-select');
+    let currentStep = 1;
+    let selectedCustomerData = {};
+    let selectedSubjectData = {};
+
+    // Update step indicators
+    function updateStepIndicators(step) {
+        for (let i = 1; i <= 3; i++) {
+            $(`#step-indicator-${i}`).removeClass('active completed');
+            if (i < step) {
+                $(`#step-indicator-${i}`).addClass('completed');
+            } else if (i === step) {
+                $(`#step-indicator-${i}`).addClass('active');
+            }
+        }
+    }
+
+    // Show specific section (make it global for onclick)
+window.showSection = function(step) {
+        $('.payment-section').removeClass('active');
+        $(`#section-${step}`).addClass('active');
+        updateStepIndicators(step);
+        currentStep = step;
+    }
+
+    // Calculate total
+    function updateTotal() {
+        const coursePrice = parseFloat($('#course_price_paid').val()) || 0;
+        const appPrice = parseFloat($('#app_price_paid').val()) || 0;
+        $('#total-default').text((coursePrice + appPrice).toFixed(2));
+    }
+
+    // STEP 1: Customer Selection
+    $('#customer-select').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const customerId = selectedOption.val();
+
+        if (!customerId) return;
+
+        selectedCustomerData = {
+            id: customerId,
+            name: selectedOption.text().split(' - ')[0],
+            collegeId: selectedOption.data('college-id'),
+            collegeName: selectedOption.data('college-name'),
+            universityName: selectedOption.data('university-name'),
+            year: selectedOption.data('year')
+        };
+
+        // Update customer info display
+        $('#customer-info').text(`${selectedCustomerData.name} - ${selectedCustomerData.collegeName} (Year ${selectedCustomerData.year})`);
+
+        // Fetch college structure type
+        fetch(`/api/get_college_structure/${selectedCustomerData.collegeId}`)
+            .then(response => response.json())
+            .then(data => {
+                selectedCustomerData.structureType = data.structure_type;
+
+                // Show appropriate dropdown
+                if (data.structure_type === 'term') {
+                    $('#term-group').show();
+                    $('#module-group').hide();
+                    
+                    // Fetch terms
+                    fetch(`/api/get_terms/${selectedCustomerData.collegeId}/${selectedCustomerData.year}`)
+                        .then(response => response.json())
+                        .then(termData => {
+                            const termSelect = $('#term-select');
+                            termSelect.empty().append('<option value="">-- Select Term --</option>');
+                            termData.terms.forEach(term => {
+                                termSelect.append(new Option(term.name, term.id));
+                            });
+                            termSelect.select2('destroy').select2({ theme: "bootstrap4", width: '100%' });
+                        });
+                } else {
+                    $('#module-group').show();
+                    $('#term-group').hide();
+                    
+                    // Fetch modules
+                    fetch(`/api/get_modules/${selectedCustomerData.collegeId}/${selectedCustomerData.year}`)
+                        .then(response => response.json())
+                        .then(moduleData => {
+                            const moduleSelect = $('#module-select');
+                            moduleSelect.empty().append('<option value="">-- Select Module --</option>');
+                            moduleData.modules.forEach(module => {
+                                moduleSelect.append(new Option(module.name, module.id));
+                            });
+                            moduleSelect.select2('destroy').select2({ theme: "bootstrap4", width: '100%' });
+                        });
+                }
+
+                // Move to step 2
+                showSection(2);
+            });
+    });
+
+    // Fetch subjects when term/module changes
+    function fetchSubjects() {
+        const termId = $('#term-select').val();
+        const moduleId = $('#module-select').val();
         const subjectSelect = $('#subject-select');
 
-        // Function to fetch and populate subjects
-        function fetchSubjects() {
-            const selectedCustomer = customerSelect.find('option:selected');
-            const collegeId = selectedCustomer.data('college-id');
-            const year = selectedCustomer.data('year');
-            const termId = termSelect.val();
-            const moduleId = moduleSelect.val();
-            const structureType = collegeDisplay.data('structure');
-
-            subjectSelect.empty().append('<option value="">Loading...</option>').trigger('change');
-
-            let apiUrl = `/api/get_subjects?college_id=${collegeId}&year=${year}`;
-            if (structureType === 'term' && termId) {
-                apiUrl += `&term_id=${termId}`;
-            } else if (structureType === 'module' && moduleId) {
-                apiUrl += `&module_id=${moduleId}`;
-            } else {
-                subjectSelect.empty().append('<option value="">-- Select Term/Module --</option>').trigger('change');
-                return;
-            }
-
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    subjectSelect.empty().append('<option value="">-- Select Subject --</option>');
-                    data.subjects.forEach(sub => {
-                        const option = new Option(sub.name, sub.id);
-                        $(option).data('course-price', sub.course_price);
-                        $(option).data('app-price', sub.app_price);
-                        subjectSelect.append(option);
-                    });
-                })
-                .catch(error => console.error('Error:', error));
+        let apiUrl = `/api/get_subjects?college_id=${selectedCustomerData.collegeId}&year=${selectedCustomerData.year}`;
+        
+        if (selectedCustomerData.structureType === 'term' && termId) {
+            apiUrl += `&term_id=${termId}`;
+        } else if (selectedCustomerData.structureType === 'module' && moduleId) {
+            apiUrl += `&module_id=${moduleId}`;
+        } else {
+            subjectSelect.empty().append('<option value="">-- Select Term/Module First --</option>');
+            subjectSelect.select2('destroy').select2({ theme: "bootstrap4", width: '100%' });
+            return;
         }
 
-        // 1. When a Customer is selected, the main logic starts
-        customerSelect.on('change', function() {
-            const selectedOption = $(this).find('option:selected');
-            const collegeId = selectedOption.data('college-id');
-            const year = selectedOption.data('year');
-            const collegeName = selectedOption.text().split('(')[1].replace(')', ''); // Extract college name from text
+        subjectSelect.empty().append('<option value="">Loading...</option>').trigger('change');
 
-            // Reset everything
-            filtersWrapper.hide();
-            paymentWrapper.hide();
-            termWrapper.hide();
-            moduleWrapper.hide();
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                subjectSelect.empty().append('<option value="">-- Select Subject --</option>');
+                data.subjects.forEach(sub => {
+                    const option = new Option(sub.name, sub.id);
+                    $(option).data('course-price', sub.course_price);
+                    $(option).data('app-price', sub.app_price);
+                    $(option).data('name', sub.name);
+                    subjectSelect.append(option);
+                });
+                subjectSelect.select2('destroy').select2({ theme: "bootstrap4", width: '100%' });
+            });
+    }
 
-            if (collegeId && year) {
-                // Show the filter section
-                filtersWrapper.slideDown(300);
-                collegeDisplay.val(collegeName); // Show the customer's college
+    $('#term-select, #module-select').on('change', fetchSubjects);
 
-                // Fetch the college's structure type (term or module)
-                fetch(`/api/get_college_structure/${collegeId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        collegeDisplay.data('structure', data.structure_type); // Store structure type
+    // STEP 2: Subject Selection
+    $('#subject-select').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const subjectId = selectedOption.val();
 
-                        if (data.structure_type === 'term') {
-                            // Fetch the terms for this customer's college and year
-                            fetch(`/api/get_terms/${collegeId}/${year}`)
-                                .then(response => response.json())
-                                .then(termData => {
-                                    termSelect.empty().append('<option value="">-- Select Term --</option>');
-                                    termData.terms.forEach(term => {
-                                        termSelect.append(new Option(term.name, term.id));
-                                    });
-                                    termWrapper.show();
-                                });
-                        } else if (data.structure_type === 'module') {
-                            // Fetch the modules for this customer's college and year
-                            fetch(`/api/get_modules/${collegeId}/${year}`)
-                                .then(response => response.json())
-                                .then(moduleData => {
-                                    moduleSelect.empty().append('<option value="">-- Select Module --</option>');
-                                    moduleData.modules.forEach(module => {
-                                        moduleSelect.append(new Option(module.name, module.id));
-                                    });
-                                    moduleWrapper.show();
-                                });
-                        }
-                    });
-            }
-        });
+        if (!subjectId) return;
 
-        // 2. When Term or Module changes, fetch the subjects
-        termSelect.on('change', fetchSubjects);
-        moduleSelect.on('change', fetchSubjects);
+        selectedSubjectData = {
+            id: subjectId,
+            name: selectedOption.data('name'),
+            coursePrice: selectedOption.data('course-price') || 0,
+            appPrice: selectedOption.data('app-price') || 0
+        };
 
-        // 3. When the final Subject is selected, show payment details and auto-fill prices
-        subjectSelect.on('change', function() {
-            const selectedOption = $(this).find('option:selected');
-            const coursePrice = selectedOption.data('course-price') || 0;
-            const appPrice = selectedOption.data('app-price') || 0;
+        // Update displays
+        $('#subject-info').text(selectedSubjectData.name);
+        $('#default-course-price').text(selectedSubjectData.coursePrice.toFixed(2));
+        $('#default-app-price').text(selectedSubjectData.appPrice.toFixed(2));
+        $('#course_price_paid').val(selectedSubjectData.coursePrice.toFixed(2));
+        $('#app_price_paid').val(selectedSubjectData.appPrice.toFixed(2));
+        
+        updateTotal();
 
-            if (selectedOption.val()) {
-                paymentWrapper.slideDown(300);
-                $('#course_price_paid').val(coursePrice);
-                $('#app_price_paid').val(appPrice);
-            } else {
-                paymentWrapper.slideUp(300);
-            }
-        });
-        // --- END OF DYNAMIC PAYMENT FORM LOGIC ---
+        // Move to step 3
+        showSection(3);
     });
+
+    // Update total when prices change
+    $('#course_price_paid, #app_price_paid').on('input', updateTotal);
+
+    // Back button
+    $('#btn-back').on('click', function() {
+        if (currentStep > 1) {
+            showSection(currentStep - 1);
+        }
+    });
+});
+
+// Make step indicators clickable (only for completed steps)
+$('.payment-steps').on('click', '.step.completed', function() {
+    const stepNum = parseInt($(this).attr('id').split('-')[2]);
+    showSection(stepNum);
+});
+
+// Update step indicators to be clickable after completion
+function updateStepIndicators(step) {
+    for (let i = 1; i <= 3; i++) {
+        $(`#step-indicator-${i}`).removeClass('active completed');
+        if (i < step) {
+            $(`#step-indicator-${i}`).addClass('completed');
+        } else if (i === step) {
+            $(`#step-indicator-${i}`).addClass('active');
+        }
+    }
+}
 </script>
 {% endblock javascripts %}

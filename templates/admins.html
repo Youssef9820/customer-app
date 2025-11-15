@@ -26,7 +26,15 @@
             </div>
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" class="form-control" name="email" >
+              <input type="email" class="form-control" name="email">
+            </div>
+            <!-- ✅ NEW: Role Selection Dropdown -->
+            <div class="form-group">
+              <label>Role</label>
+              <select class="form-control" name="role" required>
+                <option value="user" selected>User (Limited Access)</option>
+                <option value="admin">Admin (Full Access)</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Password</label>
@@ -53,14 +61,40 @@
                 <tr>
                   <th>Username</th>
                   <th>Email</th>
+                  <th>Role</th> <!-- ✅ NEW COLUMN -->
                   <th class="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for user in all_users %}
                 <tr>
-                  <td>{{ user.username }}</td>
-                  <td>{{ user.email }}</td>
+                  <td>
+                    {{ user.username }}
+                    {% if user.id == current_user.id %}
+                      <span class="badge badge-info">You</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ user.email or 'N/A' }}</td>
+                  
+                  <!-- ✅ NEW: Role Display/Edit -->
+                  <td>
+                    {% if user.id == current_user.id %}
+                      <!-- Can't change your own role -->
+                      <span class="badge badge-{% if user.role == 'admin' %}danger{% else %}secondary{% endif %}">
+                        {{ user.role|capitalize }}
+                      </span>
+                    {% else %}
+                      <!-- Can change other users' roles -->
+                      <form action="{{ url_for('auth.edit_user_role', user_id=user.id) }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <select name="role" class="form-control form-control-sm" onchange="this.form.submit()" style="width: auto; display: inline-block;">
+                          <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                          <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                        </select>
+                      </form>
+                    {% endif %}
+                  </td>
+                  
                   <td class="text-center">
                     {% if user.id != current_user.id %}
                     <form action="{{ url_for('auth.delete_user', user_id=user.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" style="display: inline;">
@@ -77,6 +111,48 @@
                 {% endfor %}
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ NEW: Permission Legend -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Role Permissions</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6><span class="badge badge-danger">Admin</span> - Full Access</h6>
+              <ul>
+                <li>✅ View and manage all students</li>
+                <li>✅ View payment history</li>
+                <li>✅ Add/Edit/Delete customers</li>
+                <li>✅ Manage settings (Countries, Universities, Colleges, etc.)</li>
+                <li>✅ Manage subjects and pricing</li>
+                <li>✅ Manage instructors</li>
+                <li>✅ Import data</li>
+                <li>✅ Manage users and permissions</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6><span class="badge badge-secondary">User</span> - Limited Access</h6>
+              <ul>
+                <li>✅ View students and their profiles</li>
+                <li>✅ View payment history</li>
+                <li>✅ Add new customers</li>
+                <li>❌ Cannot edit/delete customers</li>
+                <li>❌ Cannot access settings</li>
+                <li>❌ Cannot manage subjects or pricing</li>
+                <li>❌ Cannot manage instructors</li>
+                <li>❌ Cannot import data</li>
+                <li>❌ Cannot manage users</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

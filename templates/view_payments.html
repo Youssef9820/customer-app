@@ -1,52 +1,476 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} All Payments {% endblock %}
+{% block title %}Payment History{% endblock %}
+
+{% block page_title %}Payment History{% endblock %}
 
 {% block content %}
+
+<style>
+    /* Filter Container */
+    .filter-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 1200px) {
+        .filter-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .filter-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .filter-item .form-group {
+        margin-bottom: 0;
+    }
+
+    .filter-item label {
+        font-size: 0.875rem;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    /* Stats Bar */
+    .payment-stats {
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    @media (max-width: 992px) {
+        .payment-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e14eca;
+    }
+
+    .stat-value.success {
+        color: #00f2c3;
+    }
+
+    /* Table Styling */
+    #payments-table {
+        font-size: 0.875rem;
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    #payments-table thead th {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-bottom: 2px solid #e14eca;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding: 12px 8px;
+        padding-right: 25px !important;
+        white-space: nowrap;
+    }
+
+    #payments-table thead th:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    #payments-table thead th.sortable::after {
+        content: '⇅';
+        position: absolute;
+        right: 8px;
+        opacity: 0.3;
+        font-size: 12px;
+    }
+
+    #payments-table thead th.sort-asc::after {
+        content: '↑';
+        opacity: 1;
+        color: #e14eca;
+    }
+
+    #payments-table thead th.sort-desc::after {
+        content: '↓';
+        opacity: 1;
+        color: #e14eca;
+    }
+
+    /* Column widths */
+    #payments-table th:nth-child(1) { width: 40px; } /* # */
+    #payments-table th:nth-child(2) { width: 15%; } /* Customer */
+    #payments-table th:nth-child(3) { width: 15%; } /* Subject */
+    #payments-table th:nth-child(4) { width: 10%; } /* Course Price */
+    #payments-table th:nth-child(5) { width: 10%; } /* App Price */
+    #payments-table th:nth-child(6) { width: 10%; } /* Total */
+    #payments-table th:nth-child(7) { width: 10%; } /* Method */
+    #payments-table th:nth-child(8) { width: 10%; } /* Payment Date */
+    #payments-table th:nth-child(9) { width: 10%; } /* Created */
+    #payments-table th:nth-child(10) { width: 10%; } /* Updated */
+
+    #payments-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    #payments-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    #payments-table tbody td {
+        vertical-align: middle;
+        padding: 10px 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .row-number {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        font-size: 0.85em;
+        text-align: center;
+    }
+
+    .customer-link {
+        color: #1d8cf8;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .customer-link:hover {
+        color: #e14eca;
+        text-decoration: underline;
+    }
+
+    .price-cell {
+        font-weight: 600;
+        color: #00f2c3;
+    }
+
+    .date-text {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Export Button */
+    .export-btn {
+        min-width: 140px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.3;
+    }
+
+    /* Select2 */
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: 38px !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        color: #fff !important;
+    }
+
+    .form-control {
+        height: 38px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+
+    .form-control:focus {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: #e14eca;
+        color: #fff;
+    }
+
+    /* Quick Filters */
+.quick-filters {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quick-filters-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-filters-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.quick-filter-btn {
+    padding: 6px 15px !important;
+    font-size: 0.875rem;
+    border: 1px solid rgba(29, 140, 248, 0.5) !important;
+    color: #1d8cf8 !important;
+    background-color: transparent !important;
+    transition: all 0.3s;
+}
+
+.quick-filter-btn:hover {
+    background-color: rgba(29, 140, 248, 0.1) !important;
+    border-color: #1d8cf8 !important;
+    transform: translateY(-2px);
+}
+
+.quick-filter-btn.active {
+    background-color: #1d8cf8 !important;
+    color: #fff !important;
+    border-color: #1d8cf8 !important;
+    box-shadow: 0 4px 15px rgba(29, 140, 248, 0.4);
+}
+
+.quick-filter-btn i {
+    margin-right: 4px;
+}
+
+@media (max-width: 768px) {
+    .quick-filters-buttons {
+        flex-direction: column;
+    }
+    
+    .quick-filter-btn {
+        width: 100%;
+    }
+}
+
+.alert-info {
+    background-color: rgba(29, 140, 248, 0.2);
+    border: 1px solid rgba(29, 140, 248, 0.5);
+    color: #fff;
+}
+</style>
+
 <div class="content">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">All Payments</h4>
-                    <p class="category">A complete history of all recorded transactions, sorted by most recent.</p>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="title mb-0">Payment History</h5>
+                            <p class="category mb-0">Complete record of all transactions</p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-info btn-sm export-btn" onclick="exportToExcel()">
+                                <i class="tim-icons icon-cloud-download-93"></i> Export to Excel
+                            </button>
+                            <a href="{{ url_for('main.record_payment_page') }}" class="btn btn-primary btn-sm">
+                                <i class="tim-icons icon-simple-add"></i> New Payment
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
+                    
+                    <!-- Statistics -->
+                    <div class="payment-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Payments</div>
+                            <div class="stat-value" id="total-count">{{ payments|length }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Filtered</div>
+                            <div class="stat-value" id="filtered-count">{{ payments|length }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Revenue</div>
+                            <div class="stat-value success" id="total-revenue">0.00</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Filtered Revenue</div>
+                            <div class="stat-value success" id="filtered-revenue">0.00</div>
+                        </div>
+                    </div>
+<!-- Quick Date Filters -->
+<div class="quick-filters">
+    <div class="quick-filters-label">
+        <i class="tim-icons icon-calendar-60"></i> Quick Filters:
+    </div>
+    <div class="quick-filters-buttons">
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn active" data-filter="today">
+            <i class="tim-icons icon-time-alarm"></i> Today
+        </button>
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="yesterday">
+            Yesterday
+        </button>
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="last7">
+            Last 7 Days
+        </button>
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="last30">
+            Last 30 Days
+        </button>
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="thismonth">
+            This Month
+        </button>
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="lastmonth">
+            Last Month
+        </button>
+        <button class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="all">
+            All Receipts
+        </button>
+    </div>
+</div>
+<!-- Active Filter Indicator -->
+<div class="alert alert-info" id="active-filter-alert" style="display: none; margin-bottom: 15px;">
+    <i class="tim-icons icon-bell-55"></i>
+    <strong>Active Filter:</strong> <span id="filter-description">Showing all payments</span>
+    <button class="btn btn-sm btn-link float-right" onclick="clearAllFilters()" style="color: #fff;">
+        Clear All Filters
+    </button>
+</div>
+                    <!-- Filters -->
+                    <div class="filter-container">
+                        <div class="filter-item">
+                            <div class="form-group">
+                                <label><i class="tim-icons icon-single-02"></i> Customer</label>
+                                <select id="filter-customer" class="form-control select2-dropdown">
+                                    <option value="">All Customers</option>
+                                    {% for payment in payments %}
+                                        <option value="{{ payment.customer.id }}">{{ payment.customer.full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <div class="form-group">
+                                <label><i class="tim-icons icon-book-bookmark"></i> Subject</label>
+                                <select id="filter-subject" class="form-control select2-dropdown">
+                                    <option value="">All Subjects</option>
+                                    {% for payment in payments %}
+                                        <option value="{{ payment.subject.id }}">{{ payment.subject.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <div class="form-group">
+                                <label><i class="tim-icons icon-credit-card"></i> Payment Method</label>
+                                <select id="filter-method" class="form-control select2-dropdown">
+                                    <option value="">All Methods</option>
+                                    {% for payment in payments %}
+                                        <option value="{{ payment.payment_method.id }}">{{ payment.payment_method.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <div class="form-group">
+                                <label><i class="tim-icons icon-calendar-60"></i> From Date</label>
+                                <input type="date" id="filter-date-from" class="form-control">
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <div class="form-group">
+                                <label><i class="tim-icons icon-calendar-60"></i> To Date</label>
+                                <input type="date" id="filter-date-to" class="form-control">
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <div class="form-group">
+                                <label><i class="tim-icons icon-zoom-split"></i> Search</label>
+                                <input type="text" id="search-all" class="form-control" placeholder="Search anything...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
                     <div class="table-responsive">
-                        <table class="table tablesorter">
+                        <table class="table tablesorter" id="payments-table">
                             <thead class="text-primary">
                                 <tr>
-                                    <th>Customer</th>
-                                    <th>Subject</th>
-                                    <th>Total Paid</th>
-                                    <th>Payment Method</th>
-                                    <th>Date</th>
-                                    <th class="text-right">Actions</th>
+                                    <th>#</th>
+                                    <th class="sortable" data-sort="customer">Customer</th>
+                                    <th class="sortable" data-sort="subject">Subject</th>
+                                    <th class="sortable" data-sort="course">Course Price</th>
+                                    <th class="sortable" data-sort="app">App Price</th>
+                                    <th class="sortable" data-sort="total">Total Paid</th>
+                                    <th class="sortable" data-sort="method">Method</th>
+                                    <th class="sortable" data-sort="date">Payment Date</th>
+                                    <th class="sortable" data-sort="created">Created At</th>
+                                    <th class="sortable" data-sort="updated">Updated At</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for payment in payments %}
-                                <tr>
+                                <tr data-customer-id="{{ payment.customer.id }}"
+                                    data-customer="{{ payment.customer.full_name|lower }}"
+                                    data-subject-id="{{ payment.subject.id }}"
+                                    data-subject="{{ payment.subject.name|lower }}"
+                                    data-method-id="{{ payment.payment_method.id }}"
+                                    data-method="{{ payment.payment_method.name|lower }}"
+                                    data-course="{{ payment.course_price_paid }}"
+                                    data-app="{{ payment.application_price_paid }}"
+                                    data-total="{{ payment.course_price_paid + payment.application_price_paid }}"
+                                    data-date="{{ payment.payment_date.strftime('%Y-%m-%d') }}"
+                                    data-created="{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}"
+                                    data-updated="{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}">
+                                    <td class="row-number">{{ loop.index }}</td>
                                     <td>
-                                        <a href="{{ url_for('main.customer_profile', customer_id=payment.customer.id) }}">
+                                        <a href="{{ url_for('main.customer_profile', customer_id=payment.customer.id) }}" class="customer-link">
                                             {{ payment.customer.full_name }}
                                         </a>
                                     </td>
                                     <td>{{ payment.subject.name }}</td>
-                                    <td>
-                                        {{ "%.2f"|format(payment.course_price_paid + payment.application_price_paid) }}
-                                        <span class="text-muted">{{ payment.subject.currency.symbol }}</span>
+                                    <td class="price-cell">{{ "%.2f"|format(payment.course_price_paid) }} {{ payment.subject.currency.symbol }}</td>
+                                    <td class="price-cell">{{ "%.2f"|format(payment.application_price_paid) }} {{ payment.subject.currency.symbol }}</td>
+                                    <td class="price-cell">
+                                        <strong>{{ "%.2f"|format(payment.course_price_paid + payment.application_price_paid) }}</strong> {{ payment.subject.currency.symbol }}
                                     </td>
                                     <td>{{ payment.payment_method.name }}</td>
-                                    <td>{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                                                                        <td class="text-right">
-                                        <!-- Actions like Edit/Delete Payment can be added here in the future -->
-                                    </td>
-
+                                    <td class="date-text">{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="date-text">{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="date-text">{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center">No payments have been recorded yet.</td>
+                                    <td colspan="10" class="empty-state">
+                                        <i class="tim-icons icon-coins"></i>
+                                        <p>No payments recorded yet.</p>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -57,4 +481,366 @@
         </div>
     </div>
 </div>
+
 {% endblock content %}
+
+{% block javascripts %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2 with unique values
+    function initializeFilters() {
+        // Get unique customers
+        const customers = new Set();
+        $('#payments-table tbody tr').each(function() {
+            const id = $(this).data('customer-id');
+            const name = $(this).data('customer');
+            if (id && name) customers.add(JSON.stringify({id, name}));
+        });
+        
+        $('#filter-customer').empty().append('<option value="">All Customers</option>');
+        Array.from(customers).map(JSON.parse).forEach(c => {
+            $('#filter-customer').append(new Option(c.name, c.id));
+        });
+
+        // Get unique subjects
+        const subjects = new Set();
+        $('#payments-table tbody tr').each(function() {
+            const id = $(this).data('subject-id');
+            const name = $(this).data('subject');
+            if (id && name) subjects.add(JSON.stringify({id, name}));
+        });
+        
+        $('#filter-subject').empty().append('<option value="">All Subjects</option>');
+        Array.from(subjects).map(JSON.parse).forEach(s => {
+            $('#filter-subject').append(new Option(s.name, s.id));
+        });
+
+        // Get unique methods
+        const methods = new Set();
+        $('#payments-table tbody tr').each(function() {
+            const id = $(this).data('method-id');
+            const name = $(this).data('method');
+            if (id && name) methods.add(JSON.stringify({id, name}));
+        });
+        
+        $('#filter-method').empty().append('<option value="">All Methods</option>');
+        Array.from(methods).map(JSON.parse).forEach(m => {
+            $('#filter-method').append(new Option(m.name, m.id));
+        });
+
+        // Initialize Select2
+        $('.select2-dropdown').select2({
+            theme: "bootstrap4"
+        });
+    }
+
+    initializeFilters();
+
+    // Quick Date Filter Functions
+    function getDateRange(filter) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let fromDate, toDate;
+
+        switch(filter) {
+            case 'today':
+                fromDate = new Date(today);
+                toDate = new Date(today);
+                toDate.setHours(23, 59, 59, 999);
+                break;
+            
+            case 'yesterday':
+                fromDate = new Date(today);
+                fromDate.setDate(today.getDate() - 1);
+                toDate = new Date(fromDate);
+                toDate.setHours(23, 59, 59, 999);
+                break;
+            
+            case 'last7':
+                fromDate = new Date(today);
+                fromDate.setDate(today.getDate() - 6);
+                toDate = new Date(today);
+                toDate.setHours(23, 59, 59, 999);
+                break;
+            
+            case 'last30':
+                fromDate = new Date(today);
+                fromDate.setDate(today.getDate() - 29);
+                toDate = new Date(today);
+                toDate.setHours(23, 59, 59, 999);
+                break;
+            
+            case 'thismonth':
+                fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                toDate.setHours(23, 59, 59, 999);
+                break;
+            
+            case 'lastmonth':
+                fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                toDate = new Date(today.getFullYear(), today.getMonth(), 0);
+                toDate.setHours(23, 59, 59, 999);
+                break;
+            
+            case 'all':
+                return { from: null, to: null };
+            
+            default:
+                return { from: null, to: null };
+        }
+
+        return {
+            from: fromDate.toISOString().split('T')[0],
+            to: toDate.toISOString().split('T')[0]
+        };
+    }
+
+// Quick filter button click handler
+$('.quick-filter-btn').on('click', function() {
+    $('.quick-filter-btn').removeClass('active');
+    $(this).addClass('active');
+    
+    const filter = $(this).data('filter');
+    const dateRange = getDateRange(filter);
+    
+    // Update filter description
+    const filterNames = {
+        'today': "Today's payments only",
+        'yesterday': "Yesterday's payments only",
+        'last7': 'Last 7 days',
+        'last30': 'Last 30 days',
+        'thismonth': 'This month',
+        'lastmonth': 'Last month',
+        'all': 'All payments'
+    };
+    
+    if (filter !== 'all') {
+        $('#active-filter-alert').show();
+        $('#filter-description').text(filterNames[filter]);
+    } else {
+        $('#active-filter-alert').hide();
+    }
+    
+    if (dateRange.from && dateRange.to) {
+        $('#filter-date-from').val(dateRange.from);
+        $('#filter-date-to').val(dateRange.to);
+    } else {
+        $('#filter-date-from').val('');
+        $('#filter-date-to').val('');
+    }
+    
+    filterPayments();
+});
+
+// Clear all filters function
+window.clearAllFilters = function() {
+    $('.quick-filter-btn').removeClass('active');
+    $('.quick-filter-btn[data-filter="all"]').addClass('active');
+    $('#filter-customer').val('').trigger('change');
+    $('#filter-subject').val('').trigger('change');
+    $('#filter-method').val('').trigger('change');
+    $('#filter-date-from').val('');
+    $('#filter-date-to').val('');
+    $('#search-all').val('');
+    $('#active-filter-alert').hide();
+    filterPayments();
+};
+    // If manual date range is changed, deactivate quick filters
+    $('#filter-date-from, #filter-date-to').on('change', function() {
+        const fromVal = $('#filter-date-from').val();
+        const toVal = $('#filter-date-to').val();
+        
+        if (fromVal || toVal) {
+            $('.quick-filter-btn').removeClass('active');
+        }
+        
+        filterPayments();
+    });
+
+    // Sorting
+    let currentSort = { column: 'date', order: 'desc' };
+    
+    $('.sortable').click(function() {
+        const column = $(this).data('sort');
+        
+        if (currentSort.column === column) {
+            currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.order = 'asc';
+        }
+        
+        $('.sortable').removeClass('sort-asc sort-desc');
+        $(this).addClass('sort-' + currentSort.order);
+        
+        sortTable(column, currentSort.order);
+    });
+
+    function sortTable(column, order) {
+        const tbody = $('#payments-table tbody');
+        const rows = tbody.find('tr:visible').toArray();
+        
+        rows.sort(function(a, b) {
+            let aVal = $(a).data(column);
+            let bVal = $(b).data(column);
+            
+            if (!aVal && aVal !== 0) aVal = '';
+            if (!bVal && bVal !== 0) bVal = '';
+            
+            aVal = String(aVal);
+            bVal = String(bVal);
+            
+            if (order === 'asc') {
+                return aVal.localeCompare(bVal, undefined, { numeric: true });
+            } else {
+                return bVal.localeCompare(aVal, undefined, { numeric: true });
+            }
+        });
+        
+        tbody.empty().append(rows);
+        updateRowNumbers();
+    }
+
+    function updateRowNumbers() {
+        $('#payments-table tbody tr:visible').each(function(index) {
+            $(this).find('.row-number').text(index + 1);
+        });
+    }
+
+    // Calculate totals
+    function calculateTotals() {
+        let visibleCount = 0;
+        let visibleRevenue = 0;
+        let totalCount = $('#payments-table tbody tr').length;
+        let totalRevenue = 0;
+
+        $('#payments-table tbody tr').each(function() {
+            const total = parseFloat($(this).data('total')) || 0;
+            totalRevenue += total;
+            
+            if ($(this).is(':visible')) {
+                visibleCount++;
+                visibleRevenue += total;
+            }
+        });
+
+        $('#total-count').text(totalCount);
+        $('#filtered-count').text(visibleCount);
+        $('#total-revenue').text(totalRevenue.toFixed(2));
+        $('#filtered-revenue').text(visibleRevenue.toFixed(2));
+    }
+
+    // Filter function
+    function filterPayments() {
+        const customerFilter = $('#filter-customer').val();
+        const subjectFilter = $('#filter-subject').val();
+        const methodFilter = $('#filter-method').val();
+        const dateFrom = $('#filter-date-from').val();
+        const dateTo = $('#filter-date-to').val();
+        const searchText = $('#search-all').val().toLowerCase();
+
+        $('#payments-table tbody tr').each(function() {
+            let show = true;
+
+            // Customer filter
+            if (customerFilter && $(this).data('customer-id') != customerFilter) {
+                show = false;
+            }
+
+            // Subject filter
+            if (subjectFilter && $(this).data('subject-id') != subjectFilter) {
+                show = false;
+            }
+
+            // Method filter
+            if (methodFilter && $(this).data('method-id') != methodFilter) {
+                show = false;
+            }
+
+            // Date range filter
+            const paymentDate = $(this).data('date');
+            if (dateFrom && paymentDate < dateFrom) {
+                show = false;
+            }
+            if (dateTo && paymentDate > dateTo) {
+                show = false;
+            }
+
+            // Search filter
+            if (searchText) {
+                const rowText = $(this).text().toLowerCase();
+                if (!rowText.includes(searchText)) {
+                    show = false;
+                }
+            }
+
+            $(this).toggle(show);
+        });
+
+        updateRowNumbers();
+        calculateTotals();
+    }
+
+    // Event listeners
+    $('#filter-customer, #filter-subject, #filter-method').on('change', filterPayments);
+    $('#search-all').on('keyup', filterPayments);
+
+// Initial setup - Apply "Today" filter by default
+const todayRange = getDateRange('today');
+$('#filter-date-from').val(todayRange.from);
+$('#filter-date-to').val(todayRange.to);
+filterPayments();
+
+    // Default sort by date descending
+    sortTable('date', 'desc');
+    $('.sortable[data-sort="date"]').addClass('sort-desc');
+
+    // Export to Excel function
+    window.exportToExcel = function() {
+        const data = [];
+        
+        // Add headers
+        data.push([
+            '#',
+            'Customer',
+            'Subject',
+            'Course Price',
+            'App Price',
+            'Total Paid',
+            'Payment Method',
+            'Payment Date',
+            'Created At',
+            'Updated At'
+        ]);
+
+        // Add visible rows only (respects filters!)
+        let rowNum = 1;
+        $('#payments-table tbody tr:visible').each(function() {
+            const row = [];
+            row.push(rowNum++);
+            $(this).find('td').slice(1).each(function() {
+                row.push($(this).text().trim());
+            });
+            data.push(row);
+        });
+
+        // Create workbook
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Payments");
+
+        // Get active filter for filename
+        const activeFilter = $('.quick-filter-btn.active').data('filter') || 'filtered';
+        const date = new Date().toISOString().split('T')[0];
+        const filename = `payments_${activeFilter}_${date}.xlsx`;
+
+        // Download
+        XLSX.writeFile(wb, filename);
+    };
+});
+</script>
+{% endblock javascripts %}

@@ -5,6 +5,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from .models import User  # We will create this models.py file next
 from . import db, limiter  # We will set up this import structure
 from .utils.password_validation import validate_password_strength
+from .utils.permissions import admin_required
 
 # 1. Create the Blueprint
 # The first argument, 'auth', is the name of the blueprint.
@@ -117,6 +118,7 @@ def profile():
 
 @auth_bp.route('/admins')
 @login_required
+@admin_required
 def admins():
     all_users = User.query.order_by(User.username).all()
     return render_template('admins.html', all_users=all_users)
@@ -124,10 +126,12 @@ def admins():
 
 @auth_bp.route('/add_user', methods=['POST'])
 @login_required
+@admin_required
 def add_user():
     username = request.form.get('username')
     password = request.form.get('password')
     email = request.form.get('email') or None
+    role = request.form.get('role', 'user')
 
     if User.query.filter_by(username=username).first():
         flash(f"Username '{username}' already exists.", 'danger')
@@ -137,7 +141,7 @@ def add_user():
         flash(f"Email '{email}' is already registered.", 'danger')
         return redirect(url_for('auth.admins'))
 
-    new_user = User(username=username, email=email)
+    new_user = User(username=username, email=email, role=role)
     message = validate_password_strength(password)
     if message:
         flash(message, 'danger')
@@ -156,6 +160,7 @@ def add_user():
 
 @auth_bp.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
+@admin_required
 def delete_user(user_id):
     if user_id == current_user.id:
         flash("You cannot delete your own account.", 'danger')
@@ -168,3 +173,23 @@ def delete_user(user_id):
     flash(f"User '{user_to_delete.username}' has been deleted.", 'success')
     return redirect(url_for('auth.admins'))
 
+@auth_bp.route('/edit_user_role/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def edit_user_role(user_id):
+    if user_id == current_user.id:
+        flash("You cannot change your own role.", 'danger')
+        return redirect(url_for('auth.admins'))
+    
+    user = User.query.get_or_404(user_id)
+    new_role = request.form.get('role')
+    
+    if new_role not in ['admin', 'user']:
+        flash('Invalid role selected.', 'danger')
+        return redirect(url_for('auth.admins'))
+    
+    user.role = new_role
+    db.session.commit()
+    
+    flash(f"User '{user.username}' role updated to {new_role}.", 'success')
+    return redirect(url_for('auth.admins'))

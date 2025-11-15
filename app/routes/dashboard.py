@@ -20,7 +20,7 @@ def index():
     # ✅ تجميع شهري متوافق مع Postgres (بدلاً من SQLite strftime)
     customers_over_time = (
         db.session.query(
-            func.to_char(func.date_trunc('month', Customer.creation_date), 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Customer.creation_date).label('month'),
             func.count(Customer.id)
         )
         .filter(Customer.creation_date.isnot(None))

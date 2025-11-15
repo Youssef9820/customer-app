@@ -1,48 +1,246 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} View Customers {% endblock %}
+{% block title %}View Customers{% endblock %}
+
+{% block page_title %}Customer List{% endblock %}
 
 {% block content %}
 
 <style>
-    /* --- START: Flexbox Fix for Filters --- */
-
-    /* 1. Create the Flex Container */
+    /* Filter Container - FIXED with consistent spacing */
     .filter-container {
-        display: flex;  /* Activates Flexbox */
-        flex-wrap: wrap; /* This is the magic: allows items to wrap to the next line */
-        gap: 1rem;       /* Creates consistent spacing between all filter items */
-        margin-bottom: 1rem; /* Space below the entire filter block */
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* Always 3 columns on desktop */
+        gap: 15px; /* Fixed gap */
+        margin-bottom: 20px;
     }
 
-    /* 2. Define the Flex Items (the filters themselves) */
-    .filter-item {
-        flex-grow: 1;  /* Allows items to grow and fill available space */
-        flex-shrink: 1;/* Allows items to shrink if needed */
-        
-        /* 
-         * This is the most important part for stability.
-         * It sets a minimum width. No matter how much you zoom,
-         * the filter will never become smaller than this width.
-         * If it can't fit, it will wrap to the next line.
-        */
-        min-width: 200px; 
+    /* Stack to 2 columns on medium screens */
+    @media (max-width: 1200px) {
+        .filter-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
-    /* 3. Remove default Bootstrap row padding that can interfere */
-    .filter-container .form-group {
-        margin-bottom: 0; /* The 'gap' property now handles all spacing */
+    /* Stack to 1 column on small screens */
+    @media (max-width: 768px) {
+        .filter-container {
+            grid-template-columns: 1fr;
+        }
     }
-    
-    /* --- END: Flexbox Fix --- */
 
+    .filter-item .form-group {
+        margin-bottom: 0;
+    }
 
-    /* Optional: Styling for Select2 to ensure it fits perfectly */
+    .filter-item label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        font-size: 0.875rem;
+        margin-bottom: 5px;
+    }
+
+    /* Table Improvements */
+    #customer-table {
+        font-size: 0.875rem;
+        width: 100%;
+        table-layout: fixed; /* Fixed layout for consistent column widths */
+    }
+
+    #customer-table thead th {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-bottom: 2px solid #e14eca;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding: 12px 8px;
+        padding-right: 25px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #customer-table thead th:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    #customer-table thead th.sortable::after {
+        content: '⇅';
+        position: absolute;
+        right: 8px;
+        opacity: 0.3;
+        font-size: 12px;
+    }
+
+    #customer-table thead th.sort-asc::after {
+        content: '↑';
+        opacity: 1;
+        color: #e14eca;
+    }
+
+    #customer-table thead th.sort-desc::after {
+        content: '↓';
+        opacity: 1;
+        color: #e14eca;
+    }
+
+    /* Fixed column widths */
+    #customer-table th:nth-child(1) { width: 40px; } /* # */
+    #customer-table th:nth-child(2) { width: 12%; } /* Name */
+    #customer-table th:nth-child(3) { width: 12%; } /* Email */
+    #customer-table th:nth-child(4) { width: 10%; } /* WhatsApp */
+    #customer-table th:nth-child(5) { width: 7%; } /* Year */
+    #customer-table th:nth-child(6) { width: 12%; } /* College */
+    #customer-table th:nth-child(7) { width: 12%; } /* University */
+    #customer-table th:nth-child(8) { width: 10%; } /* Created */
+    #customer-table th:nth-child(9) { width: 10%; } /* Updated */
+    #customer-table th:nth-child(10) { width: 140px; } /* Actions */
+
+    #customer-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    #customer-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    #customer-table tbody td {
+        vertical-align: middle;
+        padding: 10px 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Row Number Column */
+    .row-number {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        font-size: 0.85em;
+        text-align: center;
+    }
+
+    /* Consistent Action Buttons */
+    .action-btn-group {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+
+    .action-btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+        min-width: 60px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .action-btn i {
+        font-size: 0.75rem;
+    }
+
+    /* Filter Stats */
+    .filter-stats {
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 12px 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .filter-stats .badge {
+        font-size: 0.875rem;
+        padding: 5px 10px;
+    }
+
+    /* Select2 Styling */
+    .select2-container {
+        width: 100% !important;
+    }
+
     .select2-container--bootstrap4 .select2-selection--single {
-        height: calc(1.5em + .75rem + 2px) !important;
+        height: 38px !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
     }
+
     .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
-        line-height: calc(1.5em + .75rem);
+        line-height: 36px !important;
+        color: #fff !important;
+        padding-left: 10px;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+
+    /* Customer Name Link */
+    .customer-name-link {
+        color: #1d8cf8;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.2s;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .customer-name-link:hover {
+        color: #e14eca;
+        text-decoration: underline;
+    }
+
+    /* Date columns styling */
+    .date-text {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.3;
+    }
+
+    /* Card body consistent padding */
+    .card-body {
+        padding: 20px;
+    }
+
+    /* Responsive table with horizontal scroll */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure form controls are consistent size */
+    .form-control {
+        height: 38px;
+        padding: 6px 12px;
+        font-size: 0.875rem;
+    }
+
+    .form-group label {
+        font-weight: 500;
     }
 </style>
 
@@ -51,17 +249,37 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="title">Customer List</h5>
-                    <p class="category">Filter and search for customers</p>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="title mb-0">Customer List</h5>
+                            <p class="category mb-0">Filter and search for customers</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{{ url_for('main.add_customer_page') }}" class="btn btn-primary btn-sm">
+                                <i class="tim-icons icon-simple-add"></i> Add Customer
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     
-                    <!-- START: Responsive Filters with Flexbox -->
+                    <!-- Filter Stats -->
+                    <div class="filter-stats">
+                        <div>
+                            <span class="text-muted">Total Customers:</span>
+                            <span class="badge badge-primary" id="total-count">{{ customers|length }}</span>
+                        </div>
+                        <div>
+                            <span class="text-muted">Filtered:</span>
+                            <span class="badge badge-info" id="filtered-count">{{ customers|length }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Filters - FIXED with CSS Grid -->
                     <div class="filter-container">
-                        <!-- Each filter is now a 'filter-item' inside the flex container -->
                         <div class="filter-item">
                             <div class="form-group">
-                                <label>Country</label>
+                                <label><i class="tim-icons icon-world"></i> Country</label>
                                 <select id="filter-country" class="form-control select2-dropdown">
                                     <option value="">All</option>
                                     {% for country in countries %}
@@ -72,15 +290,15 @@
                         </div>
                         <div class="filter-item">
                             <div class="form-group">
-                                <label>University</label>
-                               <select id="filter-university" class="form-control select2-dropdown">
+                                <label><i class="tim-icons icon-bank"></i> University</label>
+                                <select id="filter-university" class="form-control select2-dropdown">
                                     <option value="">All</option>
                                 </select>
                             </div>
                         </div>
                         <div class="filter-item">
                             <div class="form-group">
-                                <label>College</label>
+                                <label><i class="tim-icons icon-book-bookmark"></i> College</label>
                                 <select id="filter-college" class="form-control select2-dropdown">
                                     <option value="">All</option>
                                 </select>
@@ -88,44 +306,54 @@
                         </div>
                         <div class="filter-item">
                             <div class="form-group">
-                                <label>Search by Name</label>
+                                <label><i class="tim-icons icon-single-02"></i> Name</label>
                                 <input type="text" id="search-name" class="form-control" placeholder="Filter by name...">
                             </div>
                         </div>
                         <div class="filter-item">
                             <div class="form-group">
-                                <label>Search by Email</label>
+                                <label><i class="tim-icons icon-email-85"></i> Email</label>
                                 <input type="text" id="search-email" class="form-control" placeholder="Filter by email...">
                             </div>
                         </div>
                         <div class="filter-item">
                             <div class="form-group">
-                                <label>Search by Phone</label>
+                                <label><i class="tim-icons icon-mobile"></i> Phone</label>
                                 <input type="text" id="search-phone" class="form-control" placeholder="Filter by phone...">
                             </div>
                         </div>
                     </div>
-                    <hr>
-                    <!-- END: Filters and Search Bars -->
 
+                    <!-- Table -->
                     <div class="table-responsive">
                         <table class="table tablesorter" id="customer-table">
                             <thead class="text-primary">
                                 <tr>
-                                    <th>Full Name</th>
-                                    <th>Email</th>
-                                    <th>WhatsApp</th>
-                                    <th>Year</th>
-                                    <th>College</th>
-                                    <th>University</th>
-                                    <th class="text-center">Actions</th>
+                                    <th style="width: 50px;">#</th>
+                                    <th class="sortable" data-sort="name">Full Name</th>
+                                    <th class="sortable" data-sort="email">Email</th>
+                                    <th class="sortable" data-sort="whatsapp">WhatsApp</th>
+                                    <th class="sortable" data-sort="year">Year</th>
+                                    <th class="sortable" data-sort="college">College</th>
+                                    <th class="sortable" data-sort="university">University</th>
+                                    <th class="sortable" data-sort="created">Created At</th>
+                                    <th class="sortable" data-sort="updated">Updated At</th>
+                                    <th class="text-center" style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for customer in customers %}
-                                <tr>
+                                <tr data-name="{{ customer.full_name|lower }}" 
+                                    data-email="{{ (customer.email or '')|lower }}" 
+                                    data-whatsapp="{{ customer.whatsapp_number or '' }}"
+                                    data-year="{{ customer.year or 0 }}"
+                                    data-college="{{ customer.college.name|lower }}"
+                                    data-university="{{ customer.college.university.name|lower }}"
+                                    data-created="{{ customer.creation_date.strftime('%Y-%m-%d %H:%M') }}"
+                                    data-updated="{{ customer.last_updated.strftime('%Y-%m-%d %H:%M') }}">
+                                    <td class="row-number">{{ loop.index }}</td>
                                     <td>
-                                        <a href="{{ url_for('main.customer_profile', customer_id=customer.id) }}">
+                                        <a href="{{ url_for('main.customer_profile', customer_id=customer.id) }}" class="customer-name-link">
                                             {{ customer.full_name }}
                                         </a>
                                     </td>
@@ -134,13 +362,32 @@
                                     <td>{{ customer.year or 'N/A' }}</td>
                                     <td>{{ customer.college.name }}</td>
                                     <td>{{ customer.college.university.name }}</td>
-                                   <td class="text-center">
-                                    <a href="{{ url_for('main.edit_customer', customer_id=customer.id) }}" class="btn btn-sm btn-success">Edit</a>
-                                    <form action="{{ url_for('main.delete_customer', customer_id=customer.id) }}" method="POST" style="display:inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                                        
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this customer?');">Delete</button>
-                                    </form>
-                                  </td>
+                                    <td class="date-text">{{ customer.creation_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="date-text">{{ customer.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="text-center">
+                                        <div class="action-btn-group">
+                                            {% if current_user.role == 'admin' %}
+                                            <a href="{{ url_for('main.edit_customer', customer_id=customer.id) }}" 
+                                               class="btn btn-warning btn-sm action-btn"
+                                               title="Edit Customer">
+                                                <i class="tim-icons icon-pencil"></i> Edit
+                                            </a>
+                                            <form action="{{ url_for('main.delete_customer', customer_id=customer.id) }}" 
+                                                  method="POST" 
+                                                  style="display:inline;"
+                                                  onsubmit="return confirm('Are you sure you want to delete {{ customer.full_name }}?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" 
+                                                        class="btn btn-danger btn-sm action-btn"
+                                                        title="Delete Customer">
+                                                    <i class="tim-icons icon-trash-simple"></i> Delete
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -151,137 +398,190 @@
         </div>
     </div>
 </div>
-<!-- Chatbot HTML -->
-<div id="chatbot-container" class="chatbot-hidden">
-    <img src="{{ url_for('static', filename='assets/img/chat.jpg') }}" alt="عبدالمطلب" class="chatbot-avatar">
-    <div class="chatbot-message">
-        <strong class="chatbot-name">عبدالمطلب</strong>
-        <p id="chatbot-text"></p>
-    </div>
-</div>
 
 {% endblock content %}
 
-
 {% block javascripts %}
-{{ super() }} {# This includes the default scripts from the template #}
+{{ super() }}
 
 <script>
-// Use jQuery's document ready function for better compatibility with Select2
 $(document).ready(function() {
-    // Initialize Select2 on all dropdowns with this class
+    // Initialize Select2
     $('.select2-dropdown').select2({
         theme: "bootstrap4"
     });
 
-    // --- Element Selectors ---
-    const countryFilter = document.getElementById('filter-country');
-    const universityFilter = document.getElementById('filter-university');
-    const collegeFilter = document.getElementById('filter-college');
-    const nameSearch = document.getElementById('search-name');
-    const emailSearch = document.getElementById('search-email');
-    const phoneSearch = document.getElementById('search-phone');
-    const customerTableBody = document.querySelector('#customer-table tbody');
+    // Sorting functionality
+    let currentSort = { column: 'name', order: 'asc' };
+    
+    $('.sortable').click(function() {
+        const column = $(this).data('sort');
+        
+        // Toggle sort order if clicking same column
+        if (currentSort.column === column) {
+            currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.order = 'asc';
+        }
+        
+        // Update header styles
+        $('.sortable').removeClass('sort-asc sort-desc');
+        $(this).addClass('sort-' + currentSort.order);
+        
+        // Sort the table
+        sortTable(column, currentSort.order);
+    });
+
+    function sortTable(column, order) {
+        const tbody = $('#customer-table tbody');
+        const rows = tbody.find('tr').toArray();
+        
+        rows.sort(function(a, b) {
+            let aVal = $(a).data(column);
+            let bVal = $(b).data(column);
+            
+            // Handle empty values
+            if (!aVal && aVal !== 0) aVal = '';
+            if (!bVal && bVal !== 0) bVal = '';
+            
+            // Convert to strings for comparison
+            aVal = String(aVal);
+            bVal = String(bVal);
+            
+            if (order === 'asc') {
+                return aVal.localeCompare(bVal, undefined, { numeric: true });
+            } else {
+                return bVal.localeCompare(aVal, undefined, { numeric: true });
+            }
+        });
+        
+        tbody.empty().append(rows);
+        updateRowNumbers();
+    }
+
+    function updateRowNumbers() {
+        $('#customer-table tbody tr:visible').each(function(index) {
+            $(this).find('.row-number').text(index + 1);
+        });
+    }
+
+    // Filter elements
+    const countryFilter = $('#filter-country');
+    const universityFilter = $('#filter-university');
+    const collegeFilter = $('#filter-college');
+    const nameSearch = $('#search-name');
+    const emailSearch = $('#search-email');
+    const phoneSearch = $('#search-phone');
+    const customerTableBody = $('#customer-table tbody');
 
     function updateSelect(selectElement, options, placeholder) {
-        const $select = $(selectElement); // Get the jQuery version of the element
-        $select.empty(); // Use jQuery's empty() method
-        
-        // Add the placeholder
+        const $select = $(selectElement);
+        $select.empty();
         $select.append(new Option(placeholder, ''));
-
-        // Add the new options
         options.forEach(option => {
             $select.append(new Option(option.name, option.id));
         });
-
-        // Trigger the change event for Select2 to re-render
         $select.trigger('change');
     }
 
-    // --- Logic for Flash Messages via Chatbot ---
-    function showChatbotMessage(text, type = 'success') {
-        const chatbotContainer = document.getElementById('chatbot-container');
-        const chatbotText = document.getElementById('chatbot-text');
-
-        chatbotContainer.classList.remove('chatbot-success', 'chatbot-danger');
-        
-        if (type === 'success') {
-            chatbotContainer.classList.add('chatbot-success');
-        } else if (type === 'danger') {
-            chatbotContainer.classList.add('chatbot-danger');
-        }
-
-        chatbotText.textContent = text;
-        chatbotContainer.classList.remove('chatbot-hidden');
-        chatbotContainer.classList.add('chatbot-visible');
-
-        setTimeout(() => {
-            chatbotContainer.classList.remove('chatbot-visible');
-            chatbotContainer.classList.add('chatbot-hidden');
-        }, 5000);
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const message = urlParams.get('message');
-    const messageType = urlParams.get('type');
-
-    if (message) {
-        showChatbotMessage(message, messageType);
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    // --- Main function to fetch and render customers ---
     function fetchAndRenderCustomers() {
         const params = new URLSearchParams({
-            country_id: countryFilter.value,
-            university_id: universityFilter.value,
-            college_id: collegeFilter.value,
-            name: nameSearch.value,
-            email: emailSearch.value,
-            phone: phoneSearch.value
+            country_id: countryFilter.val(),
+            university_id: universityFilter.val(),
+            college_id: collegeFilter.val(),
+            name: nameSearch.val(),
+            email: emailSearch.val(),
+            phone: phoneSearch.val()
         });
 
         fetch(`/api/filter_customers?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
-                customerTableBody.innerHTML = ''; // Clear the table
+                customerTableBody.html('');
+                
                 if (data.customers.length === 0) {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td colspan="7" class="text-center">No customers found.</td>`;
-                    customerTableBody.appendChild(row);
+                    customerTableBody.html(`
+                        <tr>
+                            <td colspan="10" class="empty-state">
+                                <i class="tim-icons icon-zoom-split"></i>
+                                <p>No customers found matching your filters.</p>
+                            </td>
+                        </tr>
+                    `);
                 } else {
-                    data.customers.forEach(customer => {
-                        const row = document.createElement('tr');
-                        // IMPORTANT: Use url_for inside the template, not in JS.
-                        // We construct the URLs manually here.
+                    data.customers.forEach((customer, index) => {
                         const editUrl = `/edit_customer/${customer.id}`;
                         const deleteUrl = `/delete_customer/${customer.id}`;
-                        const csrfToken = '{{ csrf_token() }}'; // Get CSRF token from template
+                        const profileUrl = `/customer/${customer.id}`;
+                        const csrfToken = '{{ csrf_token() }}';
+                        
+                        // Only show actions for admin
+                        const adminActions = `{{ 'admin' if current_user.role == 'admin' else '' }}` === 'admin' ? `
+                            <a href="${editUrl}" class="btn btn-warning btn-sm action-btn" title="Edit Customer">
+                                <i class="tim-icons icon-pencil"></i> Edit
+                            </a>
+                            <form action="${deleteUrl}" method="POST" style="display:inline;" 
+                                  onsubmit="return confirm('Are you sure you want to delete ${customer.full_name}?');">
+                                <input type="hidden" name="csrf_token" value="${csrfToken}">
+                                <button type="submit" class="btn btn-danger btn-sm action-btn" title="Delete Customer">
+                                    <i class="tim-icons icon-trash-simple"></i> Delete
+                                </button>
+                            </form>
+                        ` : '<span class="text-muted">-</span>';
 
-                        row.innerHTML = `
-                            <td><a href="/customer_profile/${customer.id}">${customer.full_name}</a></td>
-                            <td>${customer.email || 'N/A'}</td>
-                            <td>${customer.whatsapp_number || 'N/A'}</td>
-                            <td>${customer.year || 'N/A'}</td>
-                            <td>${customer.college_name}</td>
-                            <td>${customer.university_name}</td>
-                            <td class="text-center">
-                                <a href="${editUrl}" class="btn btn-sm btn-success">Edit</a>
-                                <form action="${deleteUrl}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this customer?');">
-                                    <input type="hidden" name="csrf_token" value="${csrfToken}">        
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
-                            </td>
+                        // Format dates (assuming they come as ISO strings from backend)
+                        const createdDate = new Date(customer.creation_date || Date.now()).toLocaleString('en-GB', {
+                            year: 'numeric', month: '2-digit', day: '2-digit', 
+                            hour: '2-digit', minute: '2-digit'
+                        }).replace(',', '');
+                        
+                        const updatedDate = new Date(customer.last_updated || Date.now()).toLocaleString('en-GB', {
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit'
+                        }).replace(',', '');
+
+                        const row = `
+                            <tr data-name="${customer.full_name.toLowerCase()}" 
+                                data-email="${(customer.email || '').toLowerCase()}" 
+                                data-whatsapp="${customer.whatsapp_number || ''}"
+                                data-year="${customer.year || 0}"
+                                data-college="${customer.college_name.toLowerCase()}"
+                                data-university="${customer.university_name.toLowerCase()}"
+                                data-created="${createdDate}"
+                                data-updated="${updatedDate}">
+                                <td class="row-number">${index + 1}</td>
+                                <td>
+                                    <a href="${profileUrl}" class="customer-name-link">
+                                        ${customer.full_name}
+                                    </a>
+                                </td>
+                                <td>${customer.email || 'N/A'}</td>
+                                <td>${customer.whatsapp_number || 'N/A'}</td>
+                                <td>${customer.year || 'N/A'}</td>
+                                <td>${customer.college_name}</td>
+                                <td>${customer.university_name}</td>
+                                <td class="date-text">${createdDate}</td>
+                                <td class="date-text">${updatedDate}</td>
+                                <td class="text-center">
+                                    <div class="action-btn-group">
+                                        ${adminActions}
+                                    </div>
+                                </td>
+                            </tr>
                         `;
-                        customerTableBody.appendChild(row);
+                        customerTableBody.append(row);
                     });
                 }
+                
+                // Update counts
+                $('#filtered-count').text(data.customers.length);
+                updateRowNumbers();
             });
     }
 
-    // --- Event Listeners for Dynamic Dropdowns (jQuery version for Select2) ---
-    $('#filter-country').on('change', function() {
+    // Event Listeners
+    countryFilter.on('change', function() {
         const countryId = $(this).val();
         if (countryId) {
             fetch(`/api_get_universities/${countryId}`)
@@ -297,10 +597,10 @@ $(document).ready(function() {
         fetchAndRenderCustomers();
     });
 
-    $('#filter-university').on('change', function() {
+    universityFilter.on('change', function() {
         const universityId = $(this).val();
         if (universityId) {
-           fetch(`/api_get_colleges/${universityId}`)
+            fetch(`/api_get_colleges/${universityId}`)
                 .then(response => response.json())
                 .then(data => updateSelect(collegeFilter, data.colleges, 'All'));
         } else {
@@ -309,12 +609,14 @@ $(document).ready(function() {
         fetchAndRenderCustomers();
     });
 
-    // --- Event Listeners for all filters (Select2 Compatible) ---
-    $('#filter-college').on('change', fetchAndRenderCustomers);
-    
-    $('#search-name').on('keyup', fetchAndRenderCustomers);
-    $('#search-email').on('keyup', fetchAndRenderCustomers);
-    $('#search-phone').on('keyup', fetchAndRenderCustomers);
+    collegeFilter.on('change', fetchAndRenderCustomers);
+    nameSearch.on('keyup', fetchAndRenderCustomers);
+    emailSearch.on('keyup', fetchAndRenderCustomers);
+    phoneSearch.on('keyup', fetchAndRenderCustomers);
+
+    // Set default sort on page load
+    sortTable('name', 'asc');
+    $('.sortable[data-sort="name"]').addClass('sort-asc');
 });
 </script>
 

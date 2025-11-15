@@ -71,13 +71,32 @@
         border: 1px solid rgba(255, 100, 100, 0.5);
         color: #fff;
         border-radius: 8px;
+        margin-bottom: 20px;
+        padding: 15px;
+        position: relative;
     }
     .alert-success {
         background-color: rgba(100, 255, 100, 0.2);
         border: 1px solid rgba(100, 255, 100, 0.5);
     }
+    .alert-danger {
+        background-color: rgba(255, 100, 100, 0.2);
+        border: 1px solid rgba(255, 100, 100, 0.5);
+    }
     .btn-close {
         filter: invert(1) grayscale(100%) brightness(200%);
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        color: white;
+        cursor: pointer;
+        opacity: 0.7;
+    }
+    .btn-close:hover {
+        opacity: 1;
     }
 
     /* --- Form Groups with Floating Labels --- */
@@ -188,29 +207,6 @@
         transform: translateY(-3px);
         box-shadow: 0 6px 20px rgba(142, 45, 226, 0.4);
     }
-
-    /* --- Footer Links --- */
-    .signin-footer {
-        text-align: center;
-        margin-top: 30px;
-    }
-
-    .signin-footer p {
-        margin-bottom: 10px;
-        color: rgba(255, 255, 255, 0.7);
-    }
-
-    .signin-footer a {
-        color: rgba(255, 255, 255, 0.9);
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.3s;
-    }
-
-    .signin-footer a:hover {
-        color: #fff;
-        text-decoration: underline;
-    }
 </style>
 
 <div class="signin-body-wrapper">
@@ -220,13 +216,13 @@
             <p>Sign in to access your account</p>
         </div>
         <div class="signin-card-body">
-            {# This block will display any flashed messages from Flask #}
+            {# ✅ Flash messages display ONLY HERE (not in base template) #}
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        <div class="alert alert-{{ category }}" role="alert">
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">×</button>
                         </div>
                     {% endfor %}
                 {% endif %}
@@ -268,14 +264,7 @@
                 </div>
             </form>
 
-            <div class="signin-footer">
-                <p>
-                    <a href="#">Forgot Password?</a>
-                </p>
-                <p>
-                    Don't have an account? <a href="#">Sign Up</a>
-                </p>
-            </div>
+            {# ✅ REMOVED: Forgot Password & Sign Up links #}
         </div>
     </div>
 </div>

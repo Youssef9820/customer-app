@@ -2,36 +2,181 @@
 
 {% block title %}My Profile{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">My Profile</h2>
-    </div>
-    <p class="text-muted">Manage your account details and password below.</p>
+{% block page_title %}My Profile{% endblock %}
 
-    <div class="card">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('auth.profile') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
-                    </div>
-                </div>
-                <hr>
-                <p class="text-muted">Leave the password field blank to keep your current password.</p>
-                <div class="mb-3">
-                    <label for="password" class="form-label">New Password</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter a new password (optional)">
-                </div>
-                <button type="submit" class="btn btn-primary">Update Profile</button>
-            </form>
+{% block content %}
+<div class="content">
+  <div class="row">
+    
+    <!-- Left Column - Account Information -->
+    <div class="col-md-6">
+      <div class="card card-user">
+        <div class="card-header">
+          <h5 class="title">Account Information</h5>
         </div>
+        <div class="card-body">
+          <div class="author text-center">
+            <div class="block block-one"></div>
+            <div class="block block-two"></div>
+            <div class="block block-three"></div>
+            <div class="block block-four"></div>
+            <a href="javascript:void(0)">
+              <img class="avatar" src="{{ url_for('static', filename='assets/img/anime3.png') }}" alt="Profile Picture">
+              <h5 class="title mt-3">{{ current_user.username }}</h5>
+            </a>
+            <!-- Role Badge -->
+            <p class="description">
+              {% if current_user.role == 'admin' %}
+                <span class="badge badge-danger" style="font-size: 14px; padding: 8px 16px;">
+                  <i class="tim-icons icon-badge"></i> Administrator
+                </span>
+              {% else %}
+                <span class="badge badge-info" style="font-size: 14px; padding: 8px 16px;">
+                  <i class="tim-icons icon-single-02"></i> User
+                </span>
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Account Details -->
+          <div class="card-description mt-4">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label><i class="tim-icons icon-single-02"></i> Username</label>
+                  <p class="form-control-static text-white">{{ current_user.username }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label><i class="tim-icons icon-email-85"></i> Email Address</label>
+                  <p class="form-control-static text-white">{{ current_user.email or 'Not provided' }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label><i class="tim-icons icon-key-25"></i> Account Role</label>
+                  <p class="form-control-static text-white">{{ current_user.role|capitalize }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Role Permissions Info -->
+            <div class="alert alert-{% if current_user.role == 'admin' %}danger{% else %}info{% endif %} mt-3">
+              <strong>
+                <i class="tim-icons icon-bulb-63"></i> 
+                {% if current_user.role == 'admin' %}
+                  Admin Privileges:
+                {% else %}
+                  User Privileges:
+                {% endif %}
+              </strong>
+              <ul class="mb-0 mt-2" style="padding-left: 20px;">
+                {% if current_user.role == 'admin' %}
+                  <li>Full system access</li>
+                  <li>Manage users and permissions</li>
+                  <li>Access all settings</li>
+                  <li>Import/Export data</li>
+                {% else %}
+                  <li>View customers and payments</li>
+                  <li>Add new customers</li>
+                  <li>Record payments</li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- Right Column - Edit Profile & Security -->
+    <div class="col-md-6">
+      
+      <!-- Edit Profile Card -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Edit Profile</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('auth.profile') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label>Username</label>
+                  <input type="text" class="form-control" name="username" value="{{ current_user.username }}" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" class="form-control" name="email" value="{{ current_user.email }}" placeholder="your@email.com">
+                  <small class="form-text text-muted">Optional - for notifications and account recovery</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-fill btn-primary">
+                <i class="tim-icons icon-check-2"></i> Update Profile
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Change Password Card -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Security Settings</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('auth.profile') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Keep username and email hidden so they're not cleared -->
+            <input type="hidden" name="username" value="{{ current_user.username }}">
+            <input type="hidden" name="email" value="{{ current_user.email }}">
+
+            <div class="alert alert-info">
+              <i class="tim-icons icon-alert-circle-exc"></i>
+              <strong>Password Requirements:</strong>
+              <ul class="mb-0 mt-2" style="padding-left: 20px;">
+                <li>Minimum 8 characters</li>
+                <li>At least one uppercase letter</li>
+                <li>At least one lowercase letter</li>
+                <li>At least one number</li>
+              </ul>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label>New Password</label>
+                  <input type="password" class="form-control" name="password" placeholder="Enter new password">
+                  <small class="form-text text-muted">Leave blank to keep current password</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-fill btn-warning">
+                <i class="tim-icons icon-lock-circle"></i> Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}
