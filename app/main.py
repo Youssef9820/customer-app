@@ -1272,3 +1272,22 @@ def api_get_years(college_id):
             {"id": y.id, "year_number": y.year_number} for y in years
         ]
     }
+
+@main_bp.route('/api/get_customers_by_college/<int:college_id>')
+@login_required
+def get_customers_by_college(college_id):
+    """Get all customers for a specific college"""
+    customers = Customer.query.filter_by(college_id=college_id).all()
+    
+    customers_data = []
+    for customer in customers:
+        customers_data.append({
+            'id': customer.id,
+            'full_name': customer.full_name,
+            'college_id': customer.college_id,
+            'college_name': customer.college.name,
+            'university_name': customer.college.university.name,
+            'year': customer.year
+        })
+    
+    return jsonify({'customers': customers_data})

@@ -88,7 +88,7 @@
         </div>
     </div>
 
-       <!-- The Main Tabbed Interface Card -->
+    <!-- The Main Tabbed Interface Card -->
     <div class="card instructor-report-card mt-4">
         <ul class="nav nav-tabs instructor-tabs" id="profileTabs" role="tablist">
             <li class="nav-item">
@@ -106,93 +106,209 @@
             <!-- Tab 1: Payment History -->
             <div class="tab-pane fade show active" id="history" role="tabpanel">
                 {% if payment_history %}
-                <div class="accordion report-accordion" id="yearAccordion">
-                    <!-- Level 1: Loop through Years -->
-                    {% for year, year_data in payment_history.items()|sort(reverse=True) %}
-                    <div class="accordion-card mb-3">
-                        <div class="accordion-header">
-                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-year-{{ year }}">
-                                <span class="accordion-title"><i class="tim-icons icon-calendar-60"></i> Year {{ year }}</span>
-                                <span class="accordion-badge badge-success">{{ "%.2f"|format(year_data.total) }} EGP</span>
-                            </button>
-                        </div>
-                        <div id="collapse-year-{{ year }}" class="collapse show" data-parent="#yearAccordion">
-                            <div class="accordion-body nested-accordion">
-                                <!-- Level 2: Loop through Terms -->
-                                {% if year_data.terms %}
-                                <div class="accordion" id="termAccordion-{{ year }}">
-                                    {% for term_name, term_data in year_data.terms.items() %}
-                                    <div class="accordion-card">
-                                        <div class="accordion-header">
-                                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-term-{{ year }}-{{ loop.index }}">
-                                                <span class="accordion-title"><i class="tim-icons icon-bullet-list-67"></i> {{ term_name }}</span>
-                                                <span class="accordion-badge badge-info">{{ "%.2f"|format(term_data.total) }} EGP</span>
-                                            </button>
-                                        </div>
-                                        <div id="collapse-term-{{ year }}-{{ loop.index }}" class="collapse" data-parent="#termAccordion-{{ year }}">
-                                            <div class="accordion-body">
-                                                <!-- Level 3: Loop through Subjects in this Term -->
-                                                {% for subject_id, subject_data in term_data.subjects.items() %}
-                                                <h6>{{ subject_data.details.name }}</h6>
-                                                <table class="report-table mb-3">
-                                                    <thead><tr><th>Date</th><th>Method</th><th class="text-right">Amount Paid</th></tr></thead>
-                                                    <tbody>
-                                                        {% for p in subject_data.payments %}
-                                                        <tr>
-                                                            <td>{{ p.payment_date.strftime('%Y-%m-%d') }}</td>
-                                                            <td>{{ p.payment_method.name }}</td>
-                                                            <td class="text-right">{{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }}</td>
-                                                        </tr>
-                                                        {% endfor %}
-                                                    </tbody>
-                                                </table>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                                <!-- Level 2: Loop through Modules -->
-                                {% if year_data.modules %}
-                                <div class="accordion" id="moduleAccordion-{{ year }}">
-                                    {% for module_name, module_data in year_data.modules.items() %}
-                                    <div class="accordion-card">
-                                        <div class="accordion-header">
-                                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse-module-{{ year }}-{{ loop.index }}">
-                                                <span class="accordion-title"><i class="tim-icons icon-vector"></i> {{ module_name }}</span>
-                                                <span class="accordion-badge badge-primary">{{ "%.2f"|format(module_data.total) }} EGP</span>
-                                            </button>
-                                        </div>
-                                        <div id="collapse-module-{{ year }}-{{ loop.index }}" class="collapse" data-parent="#moduleAccordion-{{ year }}">
-                                            <div class="accordion-body">
-                                                <!-- Level 3: Loop through Subjects in this Module -->
-                                                {% for subject_id, subject_data in module_data.subjects.items() %}
-                                                <h6>{{ subject_data.details.name }}</h6>
-                                                <table class="report-table mb-3">
-                                                    <thead><tr><th>Date</th><th>Method</th><th class="text-right">Amount Paid</th></tr></thead>
-                                                    <tbody>
-                                                        {% for p in subject_data.payments %}
-                                                        <tr>
-                                                            <td>{{ p.payment_date.strftime('%Y-%m-%d') }}</td>
-                                                            <td>{{ p.payment_method.name }}</td>
-                                                            <td class="text-right">{{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }}</td>
-                                                        </tr>
-                                                        {% endfor %}
-                                                    </tbody>
-                                                </table>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
+                
+                <!-- Search and Filter Bar -->
+                <div class="payment-filter-bar">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="search-box">
+                                <i class="tim-icons icon-zoom-split"></i>
+                                <input type="text" id="paymentSearch" class="form-control" placeholder="Search by subject, term, or module...">
                             </div>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <div class="view-toggles">
+                                <button class="btn btn-sm btn-outline-primary active" onclick="switchView('timeline')" id="timelineBtn">
+                                    <i class="tim-icons icon-bullet-list-67"></i> Timeline View
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="switchView('table')" id="tableBtn">
+                                    <i class="tim-icons icon-components"></i> Table View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline View (Default) -->
+                <div id="timelineView" class="payment-timeline-view">
+                    {% for year, year_data in payment_history.items()|sort(reverse=True) %}
+                    <div class="payment-year-section">
+                        <div class="year-header">
+                            <div class="year-badge">
+                                <i class="tim-icons icon-calendar-60"></i>
+                                <span>{{ year }}</span>
+                            </div>
+                            <div class="year-total">
+                                <span class="label">Year Total:</span>
+                                <span class="amount">{{ "%.2f"|format(year_data.total) }} EGP</span>
+                            </div>
+                        </div>
+
+                        <div class="payment-timeline">
+                            <!-- Terms -->
+                            {% if year_data.terms %}
+                                {% for term_name, term_data in year_data.terms.items() %}
+                                <div class="timeline-group" data-searchable="{{ term_name|lower }}">
+                                    <div class="timeline-group-header" onclick="toggleGroup(this)">
+                                        <div class="group-info">
+                                            <span class="group-badge badge-term">
+                                                <i class="tim-icons icon-bullet-list-67"></i>
+                                                {{ term_name }}
+                                            </span>
+                                            <span class="group-count">{{ term_data.subjects|length }} subject(s)</span>
+                                        </div>
+                                        <div class="group-total">
+                                            <span class="amount">{{ "%.2f"|format(term_data.total) }} EGP</span>
+                                            <i class="tim-icons icon-minimal-down toggle-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-group-content">
+                                        {% for subject_id, subject_data in term_data.subjects.items() %}
+                                        <div class="payment-card" data-searchable="{{ subject_data.details.name|lower }}">
+                                            <div class="payment-card-header">
+                                                <div class="subject-info">
+                                                    <i class="tim-icons icon-notes"></i>
+                                                    <h6>{{ subject_data.details.name }}</h6>
+                                                </div>
+                                                <div class="payment-badge">
+                                                    {{ subject_data.payments|length }} payment(s)
+                                                </div>
+                                            </div>
+                                            <div class="payment-list">
+                                                {% for p in subject_data.payments %}
+                                                <div class="payment-item">
+                                                    <div class="payment-date">
+                                                        <i class="tim-icons icon-calendar-60"></i>
+                                                        {{ p.payment_date.strftime('%b %d, %Y') }}
+                                                    </div>
+                                                    <div class="payment-method">
+                                                        <i class="tim-icons icon-credit-card"></i>
+                                                        {{ p.payment_method.name }}
+                                                    </div>
+                                                    <div class="payment-amount">
+                                                        {{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }} EGP
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <!-- Modules -->
+                            {% if year_data.modules %}
+                                {% for module_name, module_data in year_data.modules.items() %}
+                                <div class="timeline-group" data-searchable="{{ module_name|lower }}">
+                                    <div class="timeline-group-header" onclick="toggleGroup(this)">
+                                        <div class="group-info">
+                                            <span class="group-badge badge-module">
+                                                <i class="tim-icons icon-vector"></i>
+                                                {{ module_name }}
+                                            </span>
+                                            <span class="group-count">{{ module_data.subjects|length }} subject(s)</span>
+                                        </div>
+                                        <div class="group-total">
+                                            <span class="amount">{{ "%.2f"|format(module_data.total) }} EGP</span>
+                                            <i class="tim-icons icon-minimal-down toggle-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-group-content">
+                                        {% for subject_id, subject_data in module_data.subjects.items() %}
+                                        <div class="payment-card" data-searchable="{{ subject_data.details.name|lower }}">
+                                            <div class="payment-card-header">
+                                                <div class="subject-info">
+                                                    <i class="tim-icons icon-notes"></i>
+                                                    <h6>{{ subject_data.details.name }}</h6>
+                                                </div>
+                                                <div class="payment-badge">
+                                                    {{ subject_data.payments|length }} payment(s)
+                                                </div>
+                                            </div>
+                                            <div class="payment-list">
+                                                {% for p in subject_data.payments %}
+                                                <div class="payment-item">
+                                                    <div class="payment-date">
+                                                        <i class="tim-icons icon-calendar-60"></i>
+                                                        {{ p.payment_date.strftime('%b %d, %Y') }}
+                                                    </div>
+                                                    <div class="payment-method">
+                                                        <i class="tim-icons icon-credit-card"></i>
+                                                        {{ p.payment_method.name }}
+                                                    </div>
+                                                    <div class="payment-amount">
+                                                        {{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }} EGP
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
+
+                <!-- Table View (Hidden by default) -->
+                <div id="tableView" class="payment-table-view" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table payment-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Year</th>
+                                    <th>Term/Module</th>
+                                    <th>Subject</th>
+                                    <th>Payment Method</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentTableBody">
+                                {% for year, year_data in payment_history.items()|sort(reverse=True) %}
+                                    {% if year_data.terms %}
+                                        {% for term_name, term_data in year_data.terms.items() %}
+                                            {% for subject_id, subject_data in term_data.subjects.items() %}
+                                                {% for p in subject_data.payments %}
+                                                <tr data-searchable="{{ term_name|lower }} {{ subject_data.details.name|lower }}">
+                                                    <td>{{ p.payment_date.strftime('%b %d, %Y') }}</td>
+                                                    <td><span class="badge badge-dark">{{ year }}</span></td>
+                                                    <td><span class="badge badge-info">{{ term_name }}</span></td>
+                                                    <td>{{ subject_data.details.name }}</td>
+                                                    <td><i class="tim-icons icon-credit-card"></i> {{ p.payment_method.name }}</td>
+                                                    <td class="text-right"><strong>{{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }} EGP</strong></td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if year_data.modules %}
+                                        {% for module_name, module_data in year_data.modules.items() %}
+                                            {% for subject_id, subject_data in module_data.subjects.items() %}
+                                                {% for p in subject_data.payments %}
+                                                <tr data-searchable="{{ module_name|lower }} {{ subject_data.details.name|lower }}">
+                                                    <td>{{ p.payment_date.strftime('%b %d, %Y') }}</td>
+                                                    <td><span class="badge badge-dark">{{ year }}</span></td>
+                                                    <td><span class="badge badge-primary">{{ module_name }}</span></td>
+                                                    <td>{{ subject_data.details.name }}</td>
+                                                    <td><i class="tim-icons icon-credit-card"></i> {{ p.payment_method.name }}</td>
+                                                    <td class="text-right"><strong>{{ "%.2f"|format(p.course_price_paid + p.application_price_paid) }} EGP</strong></td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 {% else %}
                 <div class="enhanced-empty-state">
                     <div class="empty-icon"><i class="tim-icons icon-coins"></i></div>
@@ -268,4 +384,476 @@
     </div>
 
 </div>
+
+<style>
+/* ===== Payment Filter Bar ===== */
+.payment-filter-bar {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9A9A9A;
+    font-size: 16px;
+}
+
+.search-box input {
+    padding-left: 45px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    height: 45px;
+}
+
+.search-box input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #1d8cf8;
+    box-shadow: 0 0 0 3px rgba(29, 140, 248, 0.1);
+}
+
+.view-toggles button {
+    margin-left: 10px;
+    border-radius: 8px;
+    padding: 10px 20px;
+    transition: all 0.3s;
+}
+
+.view-toggles button.active {
+    background: #1d8cf8;
+    border-color: #1d8cf8;
+    color: #fff;
+}
+
+/* ===== Timeline View ===== */
+.payment-timeline-view {
+    margin-top: 20px;
+}
+
+.payment-year-section {
+    margin-bottom: 40px;
+}
+
+.year-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #1d8cf8 0%, #3358f4 100%);
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(29, 140, 248, 0.3);
+}
+
+.year-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.year-badge i {
+    font-size: 28px;
+}
+
+.year-total {
+    text-align: right;
+}
+
+.year-total .label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 5px;
+}
+
+.year-total .amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ===== Timeline Groups ===== */
+.payment-timeline {
+    padding-left: 20px;
+    border-left: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.timeline-group::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 15px;
+    width: 12px;
+    height: 12px;
+    background: #1d8cf8;
+    border-radius: 50%;
+    border: 3px solid #1e1e2e;
+}
+
+.timeline-group-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.timeline-group-header:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(29, 140, 248, 0.3);
+    transform: translateX(5px);
+}
+
+.group-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.group-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.badge-term {
+    background: linear-gradient(135deg, #00d6b4 0%, #00a89d 100%);
+    color: #fff;
+}
+
+.badge-module {
+    background: linear-gradient(135deg, #fd5d93 0%, #ec250d 100%);
+    color: #fff;
+}
+
+.group-count {
+    color: #9A9A9A;
+    font-size: 13px;
+}
+
+.group-total {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.group-total .amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1d8cf8;
+}
+
+.toggle-icon {
+    transition: transform 0.3s;
+    color: #9A9A9A;
+}
+
+.timeline-group-header.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.timeline-group-content {
+    padding: 20px 0 0 20px;
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+}
+
+.timeline-group-header.collapsed + .timeline-group-content {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+}
+
+/* ===== Payment Cards ===== */
+.payment-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.payment-card:hover {
+    border-color: rgba(29, 140, 248, 0.3);
+    box-shadow: 0 4px 15px rgba(29, 140, 248, 0.1);
+    transform: translateY(-2px);
+}
+
+.payment-card-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.subject-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.subject-info i {
+    color: #1d8cf8;
+    font-size: 18px;
+}
+
+.subject-info h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #fff;
+}
+
+.payment-badge {
+    background: rgba(29, 140, 248, 0.2);
+    color: #1d8cf8;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ===== Payment Items ===== */
+.payment-list {
+    padding: 15px 20px;
+}
+
+.payment-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.payment-item:last-child {
+    border-bottom: none;
+}
+
+.payment-date {
+    flex: 0 0 200px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #9A9A9A;
+    font-size: 13px;
+}
+
+.payment-date i {
+    color: #1d8cf8;
+}
+
+.payment-method {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #9A9A9A;
+    font-size: 13px;
+}
+
+.payment-method i {
+    color: #00d6b4;
+}
+
+.payment-amount {
+    flex: 0 0 150px;
+    text-align: right;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ===== Table View ===== */
+.payment-table-view {
+    margin-top: 20px;
+}
+
+.payment-table {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.payment-table thead {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.payment-table thead th {
+    border: none;
+    color: #9A9A9A;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    padding: 15px 20px;
+}
+
+.payment-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s;
+}
+
+.payment-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.payment-table tbody td {
+    padding: 15px 20px;
+    vertical-align: middle;
+    border: none;
+}
+
+/* ===== Search Highlight ===== */
+.search-hidden {
+    display: none !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .payment-filter-bar .row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .view-toggles {
+        text-align: left !important;
+    }
+    
+    .view-toggles button {
+        margin-left: 0;
+        margin-right: 10px;
+    }
+    
+    .year-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .payment-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .payment-amount {
+        text-align: left;
+    }
+}
+</style>
+
+<script>
+// Toggle between Timeline and Table view
+function switchView(view) {
+    const timelineView = document.getElementById('timelineView');
+    const tableView = document.getElementById('tableView');
+    const timelineBtn = document.getElementById('timelineBtn');
+    const tableBtn = document.getElementById('tableBtn');
+    
+    if (view === 'timeline') {
+        timelineView.style.display = 'block';
+        tableView.style.display = 'none';
+        timelineBtn.classList.add('active');
+        tableBtn.classList.remove('active');
+    } else {
+        timelineView.style.display = 'none';
+        tableView.style.display = 'block';
+        timelineBtn.classList.remove('active');
+        tableBtn.classList.add('active');
+    }
+}
+
+// Toggle group expand/collapse
+function toggleGroup(element) {
+    element.classList.toggle('collapsed');
+}
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('paymentSearch');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            // Search in timeline view
+            const timelineGroups = document.querySelectorAll('.timeline-group');
+            const paymentCards = document.querySelectorAll('.payment-card');
+            
+            if (searchTerm === '') {
+                // Show all
+                timelineGroups.forEach(group => group.classList.remove('search-hidden'));
+                paymentCards.forEach(card => card.classList.remove('search-hidden'));
+            } else {
+                // Filter timeline groups
+                timelineGroups.forEach(group => {
+                    const searchableText = group.getAttribute('data-searchable') || '';
+                    if (searchableText.includes(searchTerm)) {
+                        group.classList.remove('search-hidden');
+                    } else {
+                        group.classList.add('search-hidden');
+                    }
+                });
+                
+                // Filter payment cards
+                paymentCards.forEach(card => {
+                    const searchableText = card.getAttribute('data-searchable') || '';
+                    if (searchableText.includes(searchTerm)) {
+                        card.classList.remove('search-hidden');
+                    } else {
+                        card.classList.add('search-hidden');
+                    }
+                });
+            }
+            
+            // Search in table view
+            const tableRows = document.querySelectorAll('#paymentTableBody tr');
+            tableRows.forEach(row => {
+                const searchableText = row.getAttribute('data-searchable') || '';
+                if (searchTerm === '' || searchableText.includes(searchTerm)) {
+                    row.classList.remove('search-hidden');
+                } else {
+                    row.classList.add('search-hidden');
+                }
+            });
+        });
+    }
+    
+    // Initialize all groups as expanded
+    document.querySelectorAll('.timeline-group-header').forEach(header => {
+        header.addEventListener('click', function() {
+            this.classList.toggle('collapsed');
+        });
+    });
+});
+</script>
+
 {% endblock content %}

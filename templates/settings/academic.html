@@ -5,278 +5,934 @@
 {% block stylesheets %}
 {{ super() }}
 <style>
-    .settings-section .form-group-enhanced {
-        margin-bottom: 1rem;
+    /* Modern Card Layout */
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
     }
-    .structure-options {
-        display: flex;
-        gap: 1.5rem;
-        padding-top: 25px;
+
+    .add-card {
+        background: linear-gradient(135deg, rgba(225, 78, 202, 0.05) 0%, rgba(29, 140, 248, 0.05) 100%);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
     }
-    .custom-checkbox {
+
+    .add-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #e14eca 0%, #1d8cf8 100%);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+    }
+
+    .add-card:hover {
+        border-color: rgba(225, 78, 202, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(225, 78, 202, 0.15);
+    }
+
+    .add-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #e14eca 0%, #1d8cf8 100%);
+        border-radius: 12px;
         display: flex;
         align-items: center;
-        cursor: pointer;
+        justify-content: center;
+        margin-bottom: 20px;
     }
-    .custom-checkbox input {
-        margin-right: 0.5rem;
-        width: 18px;
-        height: 18px;
+
+    .card-icon i {
+        font-size: 28px;
+        color: #fff;
+    }
+
+    .card-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 10px;
+    }
+
+    .card-description {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 25px;
+    }
+
+    /* Structure Type Selection */
+    .structure-selector {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .structure-option {
+        flex: 1;
+        position: relative;
+    }
+
+    .structure-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .structure-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .structure-option input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, rgba(0, 214, 180, 0.2) 0%, rgba(0, 168, 157, 0.2) 100%);
+        border-color: #00d6b4;
+        color: #00d6b4;
+    }
+
+    .structure-option label i {
+        font-size: 18px;
+    }
+
+    .structure-option:hover label {
+        border-color: rgba(0, 214, 180, 0.3);
+    }
+
+    /* Form Groups */
+    .form-group-modern {
+        margin-bottom: 20px;
+    }
+
+    .form-group-modern label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group-modern label i {
+        margin-right: 5px;
+        color: #e14eca;
+    }
+
+    .form-control-modern {
+        width: 100%;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+
+    .form-control-modern:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #e14eca;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(225, 78, 202, 0.1);
+    }
+
+    .btn-add-modern {
+        width: 100%;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #e14eca 0%, #1d8cf8 100%);
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-add-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(225, 78, 202, 0.3);
+    }
+
+    .btn-add-modern i {
+        font-size: 16px;
+    }
+
+    /* Stats Cards */
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card-mini {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: all 0.3s;
+    }
+
+    .stat-card-mini:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(225, 78, 202, 0.3);
+    }
+
+    .stat-icon-mini {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #e14eca 0%, #1d8cf8 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon-mini i {
+        font-size: 24px;
+        color: #fff;
+    }
+
+    .stat-content-mini {
+        flex: 1;
+    }
+
+    .stat-label-mini {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 5px;
+    }
+
+    .stat-value-mini {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    /* Manage Section */
+    .manage-section-modern {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 30px;
+        margin-top: 30px;
+    }
+
+    .manage-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .manage-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .manage-title i {
+        color: #e14eca;
+        font-size: 1.6rem;
+    }
+
+    .search-filter-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .search-box-modern {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+
+    .search-box-modern input {
+        width: 100%;
+        padding: 12px 15px 12px 45px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+
+    .search-box-modern input:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #e14eca;
+        outline: none;
+    }
+
+    .search-box-modern i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9A9A9A;
+        font-size: 16px;
+    }
+
+    .filter-dropdown {
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 0.95rem;
+        min-width: 180px;
+    }
+
+    /* Table Improvements */
+    .table-modern {
+        background: transparent;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table-modern thead {
+        background: rgba(225, 78, 202, 0.1);
+    }
+
+    .table-modern thead th {
+        border: none;
+        color: #e14eca;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        padding: 15px 20px;
+    }
+
+    .table-modern tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s;
+    }
+
+    .table-modern tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .table-modern tbody td {
+        padding: 18px 20px;
+        vertical-align: middle;
+        border: none;
+        color: #fff;
+    }
+
+    .item-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .item-name i {
+        color: #e14eca;
+        font-size: 18px;
+    }
+
+    .item-meta {
+        display: block;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 5px;
+    }
+
+    .structure-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    .badge-term {
+        background: linear-gradient(135deg, rgba(0, 214, 180, 0.2) 0%, rgba(0, 168, 157, 0.2) 100%);
+        color: #00d6b4;
+        border: 1px solid rgba(0, 214, 180, 0.3);
+    }
+
+    .badge-module {
+        background: linear-gradient(135deg, rgba(253, 93, 147, 0.2) 0%, rgba(236, 37, 13, 0.2) 100%);
+        color: #fd5d93;
+        border: 1px solid rgba(253, 93, 147, 0.3);
+    }
+
+    .action-buttons-group {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .btn-action-modern {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-edit-modern {
+        background: rgba(29, 140, 248, 0.2);
+        color: #1d8cf8;
+        border: 1px solid rgba(29, 140, 248, 0.3);
+    }
+
+    .btn-edit-modern:hover {
+        background: rgba(29, 140, 248, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .btn-delete-modern {
+        background: rgba(255, 76, 76, 0.2);
+        color: #ff4c4c;
+        border: 1px solid rgba(255, 76, 76, 0.3);
+    }
+
+    .btn-delete-modern:hover {
+        background: rgba(255, 76, 76, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* Tabs */
+    .manage-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .manage-tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .manage-tab::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e14eca;
+        transform: scaleX(0);
+        transition: transform 0.3s;
+    }
+
+    .manage-tab.active {
+        color: #e14eca;
+    }
+
+    .manage-tab.active::after {
+        transform: scaleX(1);
+    }
+
+    .manage-tab:hover {
+        color: #fff;
+    }
+
+    .tab-content-modern {
+        display: none;
+    }
+
+    .tab-content-modern.active {
+        display: block;
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Empty State */
+    .empty-state-modern {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .empty-icon i {
+        font-size: 36px;
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .empty-state-modern h4 {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 10px;
+    }
+
+    .empty-state-modern p {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .settings-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-overview {
+            grid-template-columns: 1fr;
+        }
+
+        .search-filter-bar {
+            flex-direction: column;
+        }
+
+        .search-box-modern {
+            width: 100%;
+        }
+
+        .manage-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .manage-tab {
+            white-space: nowrap;
+        }
     }
 </style>
 {% endblock stylesheets %}
 
-
 {% block content %}
 <div class="content">
 
-    <div class="settings-header">
+    <!-- Header -->
+    <div class="settings-header" style="margin-bottom: 30px;">
         <div class="settings-title">
             <div class="title-icon">
                 <i class="tim-icons icon-settings-gear-63"></i>
             </div>
             <div>
                 <h2>Academic Settings</h2>
-                <p>Manage academic data such as countries, universities, and colleges</p>
+                <p>Manage countries, universities, and colleges structure</p>
             </div>
         </div>
     </div>
 
-    <div class="card settings-card">
-        <div class="card-body">
-
-            <!-- Add Country -->
-            <div class="settings-section">
-                <div class="section-header"><h5><i class="tim-icons icon-world"></i> Add Country</h5></div>
-                <form action="{{ url_for('main.add_country') }}" method="post" class="settings-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                    <div class="row align-items-end">
-                        <div class="col-12 col-lg-8">
-                            <div class="form-group-enhanced">
-                                <label>Country Name</label>
-                                <input type="text" name="country_name" class="form-control-enhanced" placeholder="e.g., Egypt" required>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-4">
-                            <div class="form-group-enhanced">
-                                <button type="submit" class="btn btn-settings-primary w-100">
-                                    <i class="tim-icons icon-simple-add"></i> Add Country
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+    <!-- Statistics Overview -->
+    <div class="stats-overview">
+        <div class="stat-card-mini">
+            <div class="stat-icon-mini">
+                <i class="tim-icons icon-world"></i>
             </div>
-
-            <!-- Add University -->
-            <div class="settings-section">
-                <div class="section-header"><h5><i class="tim-icons icon-bank"></i> Add University</h5></div>
-                <form action="{{ url_for('main.add_university') }}" method="post" class="settings-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                    <div class="row align-items-end">
-                        <div class="col-12 col-lg-4">
-                            <div class="form-group-enhanced">
-                                <label>Select Country</label>
-                                <select name="country_id" class="form-control-enhanced select2-dropdown" required>
-                                    <option value="">-- Select --</option>
-                                    {% for country in countries %}
-                                        <option value="{{ country.id }}">{{ country.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-5">
-                            <div class="form-group-enhanced">
-                                <label>University Name</label>
-                                <input type="text" name="university_name" class="form-control-enhanced" placeholder="e.g., Cairo University" required>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-3">
-                            <div class="form-group-enhanced">
-                                <button type="submit" class="btn btn-settings-primary w-100">
-                                    <i class="tim-icons icon-simple-add"></i> Add University
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+            <div class="stat-content-mini">
+                <div class="stat-label-mini">Countries</div>
+                <div class="stat-value-mini">{{ countries|length }}</div>
             </div>
-
-            <!-- Add College -->
-            <div class="settings-section">
-                <div class="section-header"><h5><i class="tim-icons icon-istanbul"></i> Add College</h5></div>
-                <form action="{{ url_for('main.add_college') }}" method="post" class="settings-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                    <div class="row align-items-end g-3">
-                        <div class="col-12 col-lg-4">
-                            <div class="form-group-enhanced">
-                                <label>Select University</label>
-                                <select name="university_id" class="form-control-enhanced select2-dropdown" required>
-                                    <option value="">-- Select --</option>
-                                    {% for university in universities %}
-                                        <option value="{{ university.id }}">{{ university.name }} ({{ university.country.name }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-3">
-                            <div class="form-group-enhanced">
-                                <label>College Name</label>
-                                <input type="text" name="college_name" class="form-control-enhanced" placeholder="e.g., Faculty of Medicine" required>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-3">
-                            <div class="form-group-enhanced structure-options">
-                                <label class="custom-radio">
-                                    <input type="radio" name="structure_type" value="term" checked> Terms
-                                </label>
-                                <label class="custom-radio">
-                                    <input type="radio" name="structure_type" value="module"> Modules
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-2">
-                            <div class="form-group-enhanced">
-                                <button type="submit" class="btn btn-settings-primary w-100">
-                                    <i class="tim-icons icon-simple-add"></i> Add College
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+        </div>
+        <div class="stat-card-mini">
+            <div class="stat-icon-mini">
+                <i class="tim-icons icon-bank"></i>
             </div>
+            <div class="stat-content-mini">
+                <div class="stat-label-mini">Universities</div>
+                <div class="stat-value-mini">{{ universities|length }}</div>
+            </div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="stat-icon-mini">
+                <i class="tim-icons icon-istanbul"></i>
+            </div>
+            <div class="stat-content-mini">
+                <div class="stat-label-mini">Colleges</div>
+                <div class="stat-value-mini">{{ colleges|length }}</div>
+            </div>
+        </div>
+    </div>
 
-            <!-- Manage Existing Academic Data -->
-            <div class="text-center mt-5">
-                <button class="btn btn-manage-toggle" type="button" data-toggle="collapse" data-target="#manageAcademic">
-                    <i class="tim-icons icon-bullet-list-67"></i> Manage Existing Academic Data
+    <!-- Add Forms Grid -->
+    <div class="settings-grid">
+        <!-- Add Country Card -->
+        <div class="add-card">
+            <div class="card-icon">
+                <i class="tim-icons icon-world"></i>
+            </div>
+            <h3 class="card-title">Add Country</h3>
+            <p class="card-description">Add a new country to the system</p>
+
+            <form action="{{ url_for('main.add_country') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group-modern">
+                    <label><i class="tim-icons icon-square-pin"></i> Country Name</label>
+                    <input type="text" name="country_name" class="form-control-modern" placeholder="e.g., Egypt" required>
+                </div>
+
+                <button type="submit" class="btn-add-modern">
+                    <i class="tim-icons icon-simple-add"></i>
+                    Add Country
                 </button>
+            </form>
+        </div>
+
+        <!-- Add University Card -->
+        <div class="add-card">
+            <div class="card-icon">
+                <i class="tim-icons icon-bank"></i>
             </div>
+            <h3 class="card-title">Add University</h3>
+            <p class="card-description">Add a new university to a country</p>
 
-            <div class="collapse" id="manageAcademic">
-                <div class="manage-section">
-                    <div class="accordion settings-accordion" id="academicAccordion">
+            <form action="{{ url_for('main.add_university') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group-modern">
+                    <label><i class="tim-icons icon-world"></i> Select Country</label>
+                    <select name="country_id" class="form-control-modern select2-dropdown" required>
+                        <option value="">-- Select Country --</option>
+                        {% for country in countries %}
+                            <option value="{{ country.id }}">{{ country.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                        <!-- Countries -->
-                        <div class="accordion-item">
-                            <div class="accordion-header">
-                                <button class="accordion-btn" type="button" data-toggle="collapse" data-target="#collapseCountries">
-                                    <span><i class="tim-icons icon-world"></i> Manage Countries</span>
-                                    <i class="tim-icons icon-minimal-down"></i>
-                                </button>
-                            </div>
-                            <div id="collapseCountries" class="collapse show" data-parent="#academicAccordion">
-                                <div class="accordion-content">
-                                    <div class="table-responsive">
-                                        <table class="table settings-table">
-                                            <tbody>
-                                                {% for country in countries %}
-                                                <tr>
-                                                    <td><strong>{{ country.name }}</strong></td>
-                                                    <td class="text-right">
-                                                        <a href="{{ url_for('main.edit_country', country_id=country.id) }}" class="btn btn-action btn-edit">
-                                                            <i class="tim-icons icon-pencil"></i> Edit
-                                                        </a>
-                                                        <form action="{{ url_for('main.delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
-                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                            
-                                                            <button type="submit" class="btn btn-action btn-delete">
-                                                                <i class="tim-icons icon-trash-simple"></i> Delete
-                                                            </button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="form-group-modern">
+                    <label><i class="tim-icons icon-bank"></i> University Name</label>
+                    <input type="text" name="university_name" class="form-control-modern" placeholder="e.g., Cairo University" required>
+                </div>
+
+                <button type="submit" class="btn-add-modern">
+                    <i class="tim-icons icon-simple-add"></i>
+                    Add University
+                </button>
+            </form>
+        </div>
+
+        <!-- Add College Card -->
+        <div class="add-card">
+            <div class="card-icon">
+                <i class="tim-icons icon-istanbul"></i>
+            </div>
+            <h3 class="card-title">Add College</h3>
+            <p class="card-description">Add a new college to a university</p>
+
+            <form action="{{ url_for('main.add_college') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group-modern">
+                    <label><i class="tim-icons icon-bank"></i> Select University</label>
+                    <select name="university_id" class="form-control-modern select2-dropdown" required>
+                        <option value="">-- Select University --</option>
+                        {% for university in universities %}
+                            <option value="{{ university.id }}">{{ university.name }} ({{ university.country.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group-modern">
+                    <label><i class="tim-icons icon-istanbul"></i> College Name</label>
+                    <input type="text" name="college_name" class="form-control-modern" placeholder="e.g., Faculty of Medicine" required>
+                </div>
+
+                <div class="form-group-modern">
+                    <label><i class="tim-icons icon-components"></i> Structure Type</label>
+                    <div class="structure-selector">
+                        <div class="structure-option">
+                            <input type="radio" name="structure_type" value="term" id="term-type" checked>
+                            <label for="term-type">
+                                <i class="tim-icons icon-calendar-60"></i>
+                                Terms
+                            </label>
                         </div>
-
-                        <!-- Universities -->
-                        <div class="accordion-item">
-                            <div class="accordion-header">
-                                <button class="accordion-btn collapsed" type="button" data-toggle="collapse" data-target="#collapseUniversities">
-                                    <span><i class="tim-icons icon-bank"></i> Manage Universities</span>
-                                    <i class="tim-icons icon-minimal-down"></i>
-                                </button>
-                            </div>
-                            <div id="collapseUniversities" class="collapse" data-parent="#academicAccordion">
-                                <div class="accordion-content">
-                                    <div class="table-responsive">
-                                        <table class="table settings-table">
-                                            <tbody>
-                                                {% for university in universities %}
-                                                <tr>
-                                                    <td><strong>{{ university.name }}</strong><span class="table-meta">{{ university.country.name }}</span></td>
-                                                    <td class="text-right">
-                                                        <a href="{{ url_for('main.edit_university', university_id=university.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                                                        <form action="{{ url_for('main.delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
-                                                                                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                                                            <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="structure-option">
+                            <input type="radio" name="structure_type" value="module" id="module-type">
+                            <label for="module-type">
+                                <i class="tim-icons icon-vector"></i>
+                                Modules
+                            </label>
                         </div>
-
-                        <!-- Colleges -->
-                        <div class="accordion-item">
-                            <div class="accordion-header">
-                                <button class="accordion-btn collapsed" type="button" data-toggle="collapse" data-target="#collapseColleges">
-                                    <span><i class="tim-icons icon-istanbul"></i> Manage Colleges</span>
-                                    <i class="tim-icons icon-minimal-down"></i>
-                                </button>
-                            </div>
-                            <div id="collapseColleges" class="collapse" data-parent="#academicAccordion">
-                                <div class="accordion-content">
-                                    <div class="table-responsive">
-                                        <table class="table settings-table">
-                                            <tbody>
-                                                {% for college in colleges %}
-                                                <tr>
-                                                    <td>
-                                                        <strong>{{ college.name }}</strong>
-                                                        {% if college.structure_type == 'term' %}
-                                                            <span class="badge badge-info ml-2">Term-based</span>
-                                                        {% elif college.structure_type == 'module' %}
-                                                            <span class="badge badge-success ml-2">Module-based</span>
-                                                        {% endif %}
-                                                        <span class="table-meta">{{ college.university.name }}</span>
-                                                    </td>
-                                                    <td class="text-right">
-                                                        <a href="{{ url_for('main.edit_college', college_id=college.id) }}" class="btn btn-action btn-edit"><i class="tim-icons icon-pencil"></i> Edit</a>
-                                                        <form action="{{ url_for('main.delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
-                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                            
-                                                            <button type="submit" class="btn btn-action btn-delete"><i class="tim-icons icon-trash-simple"></i> Delete</button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
-            </div>
 
+                <button type="submit" class="btn-add-modern">
+                    <i class="tim-icons icon-simple-add"></i>
+                    Add College
+                </button>
+            </form>
         </div>
     </div>
+
+    <!-- Manage Section -->
+    <div class="manage-section-modern">
+        <div class="manage-header">
+            <h3 class="manage-title">
+                <i class="tim-icons icon-bullet-list-67"></i>
+                Manage Academic Data
+            </h3>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="search-filter-bar">
+            <div class="search-box-modern">
+                <i class="tim-icons icon-zoom-split"></i>
+                <input type="text" id="search-input" placeholder="Search by name...">
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="manage-tabs">
+            <button class="manage-tab active" onclick="switchTab('countries')" id="tab-countries">
+                <i class="tim-icons icon-world"></i>
+                Countries ({{ countries|length }})
+            </button>
+            <button class="manage-tab" onclick="switchTab('universities')" id="tab-universities">
+                <i class="tim-icons icon-bank"></i>
+                Universities ({{ universities|length }})
+            </button>
+            <button class="manage-tab" onclick="switchTab('colleges')" id="tab-colleges">
+                <i class="tim-icons icon-istanbul"></i>
+                Colleges ({{ colleges|length }})
+            </button>
+        </div>
+
+        <!-- Tab Contents -->
+        <!-- Countries Tab -->
+        <div class="tab-content-modern active" id="content-countries">
+            {% if countries %}
+            <div class="table-responsive">
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>Country Name</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="countries-table-body">
+                        {% for country in countries %}
+                        <tr data-search-text="{{ country.name|lower }}">
+                            <td>
+                                <div class="item-name">
+                                    <i class="tim-icons icon-world"></i>
+                                    {{ country.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons-group">
+                                    <a href="{{ url_for('main.edit_country', country_id=country.id) }}" class="btn-action-modern btn-edit-modern">
+                                        <i class="tim-icons icon-pencil"></i> Edit
+                                    </a>
+                                    <form action="{{ url_for('main.delete_country', country_id=country.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this country?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn-action-modern btn-delete-modern">
+                                            <i class="tim-icons icon-trash-simple"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state-modern">
+                <div class="empty-icon">
+                    <i class="tim-icons icon-world"></i>
+                </div>
+                <h4>No Countries Yet</h4>
+                <p>Add your first country using the form above</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Universities Tab -->
+        <div class="tab-content-modern" id="content-universities">
+            {% if universities %}
+            <div class="table-responsive">
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>University Name</th>
+                            <th>Country</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="universities-table-body">
+                        {% for university in universities %}
+                        <tr data-search-text="{{ university.name|lower }} {{ university.country.name|lower }}">
+                            <td>
+                                <div class="item-name">
+                                    <i class="tim-icons icon-bank"></i>
+                                    {{ university.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <span style="color: rgba(255,255,255,0.6);">{{ university.country.name }}</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons-group">
+                                    <a href="{{ url_for('main.edit_university', university_id=university.id) }}" class="btn-action-modern btn-edit-modern">
+                                        <i class="tim-icons icon-pencil"></i> Edit
+                                    </a>
+                                    <form action="{{ url_for('main.delete_university', university_id=university.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this university?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn-action-modern btn-delete-modern">
+                                            <i class="tim-icons icon-trash-simple"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state-modern">
+                <div class="empty-icon">
+                    <i class="tim-icons icon-bank"></i>
+                </div>
+                <h4>No Universities Yet</h4>
+                <p>Add your first university using the form above</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Colleges Tab -->
+        <div class="tab-content-modern" id="content-colleges">
+            {% if colleges %}
+            <div class="table-responsive">
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>College Name</th>
+                            <th>University</th>
+                            <th>Structure</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="colleges-table-body">
+                        {% for college in colleges %}
+                        <tr data-search-text="{{ college.name|lower }} {{ college.university.name|lower }}">
+                            <td>
+                                <div class="item-name">
+                                    <i class="tim-icons icon-istanbul"></i>
+                                    {{ college.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <span style="color: rgba(255,255,255,0.6);">{{ college.university.name }}</span>
+                            </td>
+                            <td>
+                                {% if college.structure_type == 'term' %}
+                                <span class="structure-badge badge-term">
+                                    <i class="tim-icons icon-calendar-60"></i>
+                                    Term-based
+                                </span>
+                                {% elif college.structure_type == 'module' %}
+                                <span class="structure-badge badge-module">
+                                    <i class="tim-icons icon-vector"></i>
+                                    Module-based
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons-group">
+                                    <a href="{{ url_for('main.edit_college', college_id=college.id) }}" class="btn-action-modern btn-edit-modern">
+                                        <i class="tim-icons icon-pencil"></i> Edit
+                                    </a>
+                                    <form action="{{ url_for('main.delete_college', college_id=college.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this college?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn-action-modern btn-delete-modern">
+                                            <i class="tim-icons icon-trash-simple"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state-modern">
+                <div class="empty-icon">
+                    <i class="tim-icons icon-istanbul"></i>
+                </div>
+                <h4>No Colleges Yet</h4>
+                <p>Add your first college using the form above</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
 {% endblock content %}
 
@@ -284,16 +940,52 @@
 {{ super() }}
 <script>
 $(document).ready(function() {
-    // تأكد إن كل dropdown من نوع select2-dropdown بيتحول لـ select2
+    // Initialize Select2
     $('.select2-dropdown').each(function() {
-        var $this = $(this);
-        if (!$this.data('select2')) {
-            $this.select2({
+        if (!$(this).data('select2')) {
+            $(this).select2({
                 theme: "bootstrap4",
                 width: '100%'
             });
         }
     });
+
+    // Tab Switching
+    window.switchTab = function(tab) {
+        // Remove active class from all tabs and contents
+        $('.manage-tab').removeClass('active');
+        $('.tab-content-modern').removeClass('active');
+        
+        // Add active class to selected tab and content
+        $(`#tab-${tab}`).addClass('active');
+        $(`#content-${tab}`).addClass('active');
+        
+        // Clear search when switching tabs
+        $('#search-input').val('');
+        filterTable();
+    };
+
+    // Search Functionality
+    $('#search-input').on('input', function() {
+        filterTable();
+    });
+
+    function filterTable() {
+        const searchTerm = $('#search-input').val().toLowerCase();
+        const activeTab = $('.tab-content-modern.active').attr('id');
+        const tableBody = $(`#${activeTab} tbody`);
+
+        if (!tableBody.length) return;
+
+        tableBody.find('tr').each(function() {
+            const searchText = $(this).data('search-text') || '';
+            if (searchText.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
 });
 </script>
 {% endblock javascripts %}
